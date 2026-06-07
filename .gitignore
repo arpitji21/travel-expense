@@ -12,3 +12,6 @@ __pycache__/
 mysql_data/
 backend/uploads/
 !backend/uploads/.gitkeep
+backend/instance/
+*.sqlite3
+*.db

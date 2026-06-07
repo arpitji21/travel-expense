@@ -1,69 +1,140 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import ClaimTable from '../components/ClaimTable';
-import { fetchClaims } from '../lib/salesApi';
-import { formatCurrency } from '../lib/formatters';
+import { PageLoading } from '../components/Loader';
+import ScheduleList from '../components/ScheduleList';
+import StatusBadge from '../components/StatusBadge';
+import TodayRoute from '../components/TodayRoute';
+import { fetchDemands, fetchExpenses, fetchSchedule, fetchTodayRoute } from '../lib/salesApi';
+import { formatCurrency, formatDate } from '../lib/formatters';
+
+function StatCard({ label, value, to, linkText, sub }) {
+  return (
+    <div className="stat-card">
+      <p className="text-sm font-medium text-zinc-500">{label}</p>
+      <p className="mt-2 text-3xl font-extrabold tracking-tight gradient-text">{value}</p>
+      {sub ? <p className="mt-1 text-sm text-zinc-500">{sub}</p> : null}
+      {to ? (
+        <Link to={to} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700">
+          {linkText} <span aria-hidden>→</span>
+        </Link>
+      ) : null}
+    </div>
+  );
+}
 
 function DashboardPage() {
-  const [claims, setClaims] = useState([]);
+  const [demands, setDemands] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [route, setRoute] = useState([]);
+  const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchClaims()
-      .then(setClaims)
+    Promise.all([fetchDemands(), fetchExpenses(), fetchTodayRoute(), fetchSchedule()])
+      .then(([demandList, expenseList, routeStops, scheduleEntries]) => {
+        setDemands(demandList);
+        setExpenses(expenseList);
+        setRoute(routeStops);
+        setSchedule(scheduleEntries);
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  const metrics = useMemo(() => {
-    const draftCount = claims.filter((claim) => claim.status === 'draft').length;
-    const submittedCount = claims.filter((claim) => claim.status === 'submitted').length;
-    const totalAmount = claims.reduce((sum, claim) => sum + Number(claim.totalAmount || 0), 0);
+  const reimbursedTotal = useMemo(
+    () =>
+      expenses
+        .filter((expense) => expense.status === 'reimbursed')
+        .reduce((sum, expense) => sum + Number(expense.amount || 0), 0),
+    [expenses]
+  );
 
-    return { draftCount, submittedCount, totalAmount };
-  }, [claims]);
+  const todaySchedule = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return schedule.filter((entry) => entry.entryDate === today);
+  }, [schedule]);
 
   if (loading) {
-    return <p className="text-sm text-zinc-600">Loading dashboard...</p>;
+    return <PageLoading label="Loading your dashboard..." />;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Dashboard</p>
-          <h2 className="text-3xl font-bold">Sales travel claims</h2>
-        </div>
-        <Link
-          to="/claims/new"
-          className="w-fit rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-        >
-          Create Claim
-        </Link>
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Dashboard</p>
+        <h2 className="text-3xl font-extrabold tracking-tight">Your activity</h2>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-zinc-600">Draft claims</p>
-          <p className="mt-2 text-3xl font-bold">{metrics.draftCount}</p>
+      <TodayRoute route={route} today={new Date()} />
+
+      <section className="glass-card">
+        <div className="flex items-center justify-between border-b border-zinc-200/70 px-5 py-4">
+          <h3 className="section-title">Today&apos;s schedule</h3>
+          <Link to="/schedule" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+            Manage schedule
+          </Link>
         </div>
-        <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-zinc-600">Submitted claims</p>
-          <p className="mt-2 text-3xl font-bold">{metrics.submittedCount}</p>
-        </div>
-        <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-zinc-600">Total requested</p>
-          <p className="mt-2 text-3xl font-bold">{formatCurrency(metrics.totalAmount)}</p>
+        <div className="px-5 py-4">
+          <ScheduleList entries={todaySchedule} emptyText="Nothing scheduled for today. Add visits on the Schedule page." />
         </div>
       </section>
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Recent claims</h3>
-          <Link to="/claims" className="text-sm font-semibold text-teal-700 hover:text-teal-900">
-            View all
+      <section className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Hospital demands" value={demands.length} to="/demands" linkText="View demands" />
+        <StatCard label="Expenses raised" value={expenses.length} to="/expenses" linkText="View expenses" />
+        <StatCard label="Reimbursed" value={formatCurrency(reimbursedTotal)} sub="Total paid back to you" />
+      </section>
+
+      <section className="glass-card">
+        <div className="flex items-center justify-between border-b border-zinc-200/70 px-5 py-4">
+          <h3 className="section-title">Recent demands</h3>
+          <Link to="/demands/new" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+            Add demand
           </Link>
         </div>
-        <ClaimTable claims={claims.slice(0, 5)} />
+        {demands.length ? (
+          <ul className="divide-y divide-zinc-200/70">
+            {demands.slice(0, 5).map((demand) => (
+              <li key={demand.id} className="flex items-center justify-between px-5 py-3">
+                <div>
+                  <p className="font-semibold">{demand.hospitalName}</p>
+                  <p className="text-sm text-zinc-500">
+                    {demand.product} &times; {demand.quantity}
+                  </p>
+                </div>
+                <StatusBadge status={demand.status} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="px-5 py-6 text-sm text-zinc-500">No demands recorded yet.</p>
+        )}
+      </section>
+
+      <section className="glass-card">
+        <div className="flex items-center justify-between border-b border-zinc-200/70 px-5 py-4">
+          <h3 className="section-title">Recent expenses</h3>
+          <Link to="/expenses/new" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+            Add expense
+          </Link>
+        </div>
+        {expenses.length ? (
+          <ul className="divide-y divide-zinc-200/70">
+            {expenses.slice(0, 5).map((expense) => (
+              <li key={expense.id} className="flex items-center justify-between px-5 py-3">
+                <div>
+                  <p className="font-semibold">{expense.category}</p>
+                  <p className="text-sm text-zinc-500">{formatDate(expense.expenseDate)}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold">{formatCurrency(expense.amount, expense.currency)}</span>
+                  <StatusBadge status={expense.status} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="px-5 py-6 text-sm text-zinc-500">No expenses raised yet.</p>
+        )}
       </section>
     </div>
   );

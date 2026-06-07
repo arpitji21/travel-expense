@@ -16,7 +16,19 @@ class Config:
     MYSQL_USER = os.getenv("MYSQL_USER", "travel_user")
     MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "travel_password")
 
-    SQLALCHEMY_DATABASE_URI = (
+    # Use DATABASE_URL when provided (sqlite for a quick local run, or the
+    # Postgres URL that hosts like Render inject), otherwise build the MySQL
+    # connection string from the MYSQL_* settings.
+    _database_url = os.getenv("DATABASE_URL")
+    if _database_url:
+        # Normalise the scheme that managed Postgres providers hand out so
+        # SQLAlchemy uses the psycopg2 driver.
+        if _database_url.startswith("postgres://"):
+            _database_url = _database_url.replace("postgres://", "postgresql+psycopg2://", 1)
+        elif _database_url.startswith("postgresql://"):
+            _database_url = _database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+    SQLALCHEMY_DATABASE_URI = _database_url or (
         "mysql+pymysql://"
         f"{quote_plus(MYSQL_USER)}:{quote_plus(MYSQL_PASSWORD)}"
         f"@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"

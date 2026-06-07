@@ -1,10 +1,10 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 from decimal import Decimal, InvalidOperation
 
 from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
-from app.models import Claim, User
+from app.models import Demand, Expense, ScheduleEntry, User
 
 
 def current_user():
@@ -53,6 +53,18 @@ def parse_date(value, field_name, required=False):
         raise ValueError(f"{field_name} must be an ISO date.") from exc
 
 
+def parse_time(value, field_name, required=False):
+    if not value:
+        if required:
+            raise ValueError(f"{field_name} is required.")
+        return None
+
+    try:
+        return time.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must be a time like HH:MM.") from exc
+
+
 def parse_decimal(value, field_name, required=False):
     if value in (None, ""):
         if required:
@@ -69,23 +81,49 @@ def validation_error(message):
     return jsonify({"message": message}), 400
 
 
-def get_claim_for_user(claim_id, user):
-    if not claim_id or not user:
+def get_demand_for_user(demand_id, user):
+    if not demand_id or not user:
         return None
 
-    claim = Claim.query.get(claim_id)
+    demand = Demand.query.get(demand_id)
 
-    if not claim:
+    if not demand:
         return None
 
-    if user.role != "finance" and claim.user_id != user.id:
+    if user.role != "finance" and demand.user_id != user.id:
         return None
 
-    return claim
+    return demand
 
 
-def apply_claim_total(claim):
-    claim.total_amount = sum((expense.amount for expense in claim.expenses), Decimal("0.00"))
+def get_expense_for_user(expense_id, user):
+    if not expense_id or not user:
+        return None
+
+    expense = Expense.query.get(expense_id)
+
+    if not expense:
+        return None
+
+    if user.role != "finance" and expense.user_id != user.id:
+        return None
+
+    return expense
+
+
+def get_schedule_entry_for_user(entry_id, user):
+    if not entry_id or not user:
+        return None
+
+    entry = ScheduleEntry.query.get(entry_id)
+
+    if not entry:
+        return None
+
+    if user.role != "finance" and entry.user_id != user.id:
+        return None
+
+    return entry
 
 
 def utc_now():

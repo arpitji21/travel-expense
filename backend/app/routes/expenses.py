@@ -6,14 +6,14 @@ from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.models import Claim, Expense
+from app.models import Expense
 from app.routes.helpers import (
-    apply_claim_total,
-    get_claim_for_user,
+    get_expense_for_user,
     json_body,
     parse_date,
     parse_decimal,
     require_current_user,
+    require_finance_user,
     validation_error,
 )
 
@@ -36,9 +36,15 @@ def list_expenses():
     if error:
         return error
 
-    query = Expense.query.join(Expense.claim)
-    if user.role != "finance":
-        query = query.filter(Claim.user_id == user.id)
+    query = Expense.query
+
+    if user.role == "finance":
+        # Finance can filter the expense list by a particular salesperson.
+        user_id = request.args.get("userId", type=int)
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+    else:
+        query = query.filter_by(user_id=user.id)
 
     expenses = query.order_by(Expense.expense_date.desc()).all()
     return jsonify({"expenses": [expense.to_dict() for expense in expenses]})
@@ -52,9 +58,9 @@ def get_expense(expense_id):
     if error:
         return error
 
-    expense = Expense.query.get(expense_id)
+    expense = get_expense_for_user(expense_id, user)
 
-    if not expense or not get_claim_for_user(expense.claim_id, user):
+    if not expense:
         return jsonify({"message": "Expense not found."}), 404
 
     return jsonify({"expense": expense.to_dict()})
@@ -69,13 +75,6 @@ def create_expense():
         return error
 
     data = json_body()
-    claim = get_claim_for_user(data.get("claimId"), user)
-
-    if not claim:
-        return jsonify({"message": "Claim not found."}), 404
-
-    if claim.status != "draft":
-        return validation_error("Expenses can only be added to draft claims.")
 
     try:
         amount = parse_decimal(data.get("amount"), "amount", required=True)
@@ -83,11 +82,8 @@ def create_expense():
     except ValueError as exc:
         return validation_error(str(exc))
 
-    category = (data.get("category") or "").strip()
-    currency = (data.get("currency") or claim.currency).strip().upper()
-
-    if not category:
-        return validation_error("category is required.")
+    category = (data.get("category") or "Metro").strip() or "Metro"
+    currency = (data.get("currency") or "INR").strip().upper()
 
     if amount < 0:
         return validation_error("amount cannot be negative.")
@@ -96,7 +92,7 @@ def create_expense():
         return validation_error("currency must be a 3-letter code.")
 
     expense = Expense(
-        claim_id=claim.id,
+        user_id=user.id,
         category=category,
         description=(data.get("description") or "").strip() or None,
         amount=amount,
@@ -106,11 +102,9 @@ def create_expense():
     )
 
     db.session.add(expense)
-    db.session.flush()
-    apply_claim_total(claim)
     db.session.commit()
 
-    return jsonify({"expense": expense.to_dict(), "claim": claim.to_dict()}), 201
+    return jsonify({"expense": expense.to_dict()}), 201
 
 
 @expenses_bp.post("/<int:expense_id>/receipt")
@@ -121,18 +115,13 @@ def upload_receipt(expense_id):
     if error:
         return error
 
-    expense = Expense.query.get(expense_id)
+    expense = get_expense_for_user(expense_id, user)
 
     if not expense:
         return jsonify({"message": "Expense not found."}), 404
 
-    claim = get_claim_for_user(expense.claim_id, user)
-
-    if not claim:
-        return jsonify({"message": "Expense not found."}), 404
-
-    if claim.status != "draft":
-        return validation_error("Receipts can only be uploaded for draft claims.")
+    if user.role != "finance" and expense.status != "submitted":
+        return validation_error("Receipts can only be changed while the expense is pending review.")
 
     receipt = request.files.get("receipt")
 
@@ -152,7 +141,7 @@ def upload_receipt(expense_id):
     expense.receipt_url = f"/uploads/receipts/{filename}"
     db.session.commit()
 
-    return jsonify({"expense": expense.to_dict(), "claim": claim.to_dict()})
+    return jsonify({"expense": expense.to_dict()})
 
 
 @expenses_bp.put("/<int:expense_id>")
@@ -163,18 +152,13 @@ def update_expense(expense_id):
     if error:
         return error
 
-    expense = Expense.query.get(expense_id)
+    expense = get_expense_for_user(expense_id, user)
 
     if not expense:
         return jsonify({"message": "Expense not found."}), 404
 
-    claim = get_claim_for_user(expense.claim_id, user)
-
-    if not claim:
-        return jsonify({"message": "Expense not found."}), 404
-
-    if claim.status != "draft":
-        return validation_error("Expenses can only be updated on draft claims.")
+    if user.role != "finance" and expense.status != "submitted":
+        return validation_error("Expenses can only be edited while pending review.")
 
     data = json_body()
 
@@ -193,9 +177,6 @@ def update_expense(expense_id):
             return validation_error("currency must be a 3-letter code.")
         expense.currency = currency
 
-    if "receiptUrl" in data:
-        expense.receipt_url = (data.get("receiptUrl") or "").strip() or None
-
     try:
         if "amount" in data:
             amount = parse_decimal(data.get("amount"), "amount", required=True)
@@ -207,10 +188,47 @@ def update_expense(expense_id):
     except ValueError as exc:
         return validation_error(str(exc))
 
-    apply_claim_total(claim)
     db.session.commit()
 
-    return jsonify({"expense": expense.to_dict(), "claim": claim.to_dict()})
+    return jsonify({"expense": expense.to_dict()})
+
+
+def _finance_status_change(expense_id, from_status, to_status, action_label):
+    _, error = require_finance_user()
+
+    if error:
+        return error
+
+    expense = Expense.query.get(expense_id)
+
+    if not expense:
+        return jsonify({"message": "Expense not found."}), 404
+
+    if expense.status != from_status:
+        return validation_error(f"Only {from_status} expenses can be {action_label}.")
+
+    expense.status = to_status
+    db.session.commit()
+
+    return jsonify({"expense": expense.to_dict()})
+
+
+@expenses_bp.post("/<int:expense_id>/approve")
+@jwt_required()
+def approve_expense(expense_id):
+    return _finance_status_change(expense_id, "submitted", "approved", "approved")
+
+
+@expenses_bp.post("/<int:expense_id>/reject")
+@jwt_required()
+def reject_expense(expense_id):
+    return _finance_status_change(expense_id, "submitted", "rejected", "rejected")
+
+
+@expenses_bp.post("/<int:expense_id>/reimburse")
+@jwt_required()
+def reimburse_expense(expense_id):
+    return _finance_status_change(expense_id, "approved", "reimbursed", "marked reimbursed")
 
 
 @expenses_bp.delete("/<int:expense_id>")
@@ -221,22 +239,15 @@ def delete_expense(expense_id):
     if error:
         return error
 
-    expense = Expense.query.get(expense_id)
+    expense = get_expense_for_user(expense_id, user)
 
     if not expense:
         return jsonify({"message": "Expense not found."}), 404
 
-    claim = get_claim_for_user(expense.claim_id, user)
-
-    if not claim:
-        return jsonify({"message": "Expense not found."}), 404
-
-    if claim.status != "draft":
-        return validation_error("Expenses can only be deleted from draft claims.")
+    if user.role != "finance" and expense.status != "submitted":
+        return validation_error("Expenses can only be deleted while pending review.")
 
     db.session.delete(expense)
-    db.session.flush()
-    apply_claim_total(claim)
     db.session.commit()
 
-    return jsonify({"message": "Expense deleted.", "claim": claim.to_dict()})
+    return jsonify({"message": "Expense deleted."})

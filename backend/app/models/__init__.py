@@ -1,6 +1,6 @@
-from app.models.claim import Claim
+from app.models.demand import Demand
 from app.models.expense import Expense
-from app.models.travel_leg import TravelLeg
+from app.models.schedule_entry import ScheduleEntry
 from app.models.user import User
 
-__all__ = ["Claim", "Expense", "TravelLeg", "User"]
+__all__ = ["Demand", "Expense", "ScheduleEntry", "User"]

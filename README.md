@@ -1,19 +1,22 @@
-# Travel Expense Reimbursement System
+# MediRoute
 
-Full-stack starter scaffold for a Travel Expense Reimbursement System.
+**MediRoute** — a field-sales companion for hospital demands, daily routes/schedules, and expense reimbursements. Full-stack app with two roles — **salesperson** and **finance**.
 
-This repository includes the backend foundation and first API layer:
+- A **salesperson** records hospital demands (hospital, product, quantity) and raises
+  expenses by uploading a photo/scan of a bill (e.g. a metro ticket) with amount and date.
+- A **finance** user logs in and reviews everything in two tabs: a **Demands** list and an
+  **Expenses** list, each filterable by a particular salesperson, and approves/reimburses expenses.
+
+Stack:
 
 - React + Vite + Tailwind frontend
 - Flask backend
 - MySQL connection through SQLAlchemy
-- JWT authentication setup
-- SQLAlchemy models and migration for users, claims, travel legs, and expenses
+- JWT authentication with sales/finance roles
+- SQLAlchemy models and migration for users, demands, and expenses
 - Seed users for sales and finance roles
 - Environment variable templates
 - Docker Compose orchestration
-
-The frontend is still a starter shell.
 
 ## Folder Structure
 
@@ -22,16 +25,16 @@ The frontend is still a starter shell.
 |-- backend/
 |   |-- app/
 |   |   |-- models/
-|   |   |   |-- claim.py
+|   |   |   |-- demand.py
 |   |   |   |-- expense.py
-|   |   |   |-- travel_leg.py
+|   |   |   |-- schedule_entry.py
 |   |   |   `-- user.py
 |   |   |-- routes/
 |   |   |   |-- auth.py
-|   |   |   |-- claims.py
+|   |   |   |-- demands.py
 |   |   |   |-- expenses.py
 |   |   |   |-- health.py
-|   |   |   |-- travel_legs.py
+|   |   |   |-- schedule.py
 |   |   |   `-- users.py
 |   |   |-- __init__.py
 |   |   |-- config.py
@@ -142,55 +145,57 @@ Users:
 - `PUT /api/users/:id`
 - `DELETE /api/users/:id`
 
-Claims:
+Demands:
 
-- `GET /api/claims`
-- `POST /api/claims`
-- `GET /api/claims/:id`
-- `PUT /api/claims/:id`
-- `POST /api/claims/:id/submit`
-- `POST /api/claims/:id/approve`
-- `POST /api/claims/:id/reject`
-- `POST /api/claims/:id/reimburse`
-- `DELETE /api/claims/:id`
+- `GET /api/demands` (finance can pass `?userId=` to filter by salesperson)
+- `GET /api/demands/route` — today's route: hospitals with open demands grouped into one stop each (finance can pass `?userId=`)
+- `POST /api/demands`
+- `GET /api/demands/:id`
+- `PUT /api/demands/:id`
+- `DELETE /api/demands/:id`
 
-Travel legs:
+Schedule (daily visits):
 
-- `GET /api/travel-legs`
-- `POST /api/travel-legs`
-- `GET /api/travel-legs/:id`
-- `PUT /api/travel-legs/:id`
-- `DELETE /api/travel-legs/:id`
+- `GET /api/schedule` (finance can pass `?userId=` to view a salesperson; optional `?date=`)
+- `POST /api/schedule`
+- `GET /api/schedule/:id`
+- `PUT /api/schedule/:id` (edit, or toggle `done`)
+- `DELETE /api/schedule/:id`
 
 Expenses:
 
-- `GET /api/expenses`
+- `GET /api/expenses` (finance can pass `?userId=` to filter by salesperson)
 - `POST /api/expenses`
 - `GET /api/expenses/:id`
 - `PUT /api/expenses/:id`
-- `POST /api/expenses/:id/receipt`
+- `POST /api/expenses/:id/receipt` (multipart upload of the bill image/PDF)
+- `POST /api/expenses/:id/approve`
+- `POST /api/expenses/:id/reject`
+- `POST /api/expenses/:id/reimburse`
 - `DELETE /api/expenses/:id`
 
-All non-auth endpoints require a JWT bearer token. Finance users can read all records; sales users can access records attached to their own claims.
+All non-auth endpoints require a JWT bearer token. Finance users can read all demands and
+expenses; sales users can only see their own.
 
 ## Salesperson Module
 
-The frontend includes these salesperson pages:
+Salesperson pages:
 
-- Dashboard: claim totals and recent claims
-- Create Claim: starts a draft claim
-- My Claims: claim list with status filters
-- Claim Details: add travel legs, add expenses, upload receipts, and submit a draft claim
+- Dashboard: **Today's route** banner (hospitals with open demands), **Today's schedule**, plus demand/expense counts and recent activity
+- Schedule: keep a daily schedule of visits (date, place, time, note) and tick each one off as done
+- Demands / Add Demand: record a hospital demand (hospital, address, product, quantity, note)
+- Expenses / Add Expense: upload a bill image (travel/metro and others) with amount and date, then track its status
 
 ## Finance Module
 
-The frontend includes these finance pages:
+Finance pages (tabs):
 
-- Dashboard: Submitted Claims, Approved Claims, and Reimbursed Claims
-- Claim Details: review travel legs, expenses, and receipts
+- Demands: every recorded hospital demand, filterable by salesperson
+- Expenses: every raised expense with its bill image, filterable by salesperson
+- Salespeople: a profile per salesperson combining their daily schedule, reimbursement bills, and demands; expenses can be approved/reimbursed from here too
 
-Finance users can:
+Finance users can, per expense:
 
-- Approve submitted claims
-- Reject submitted claims
-- Mark approved claims reimbursed
+- Approve a submitted expense
+- Reject a submitted expense
+- Mark an approved expense reimbursed

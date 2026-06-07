@@ -2,7 +2,8 @@ import { statusClass } from '../lib/formatters';
 
 function StatusBadge({ status }) {
   return (
-    <span className={`rounded-md border px-2 py-1 text-xs font-semibold uppercase ${statusClass(status)}`}>
+    <span className={`badge ${statusClass(status)}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
       {status}
     </span>
   );

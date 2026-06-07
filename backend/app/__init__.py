@@ -5,12 +5,12 @@ from flask_cors import CORS
 
 from app.config import Config
 from app.extensions import db, jwt, migrate
-from app.models import Claim, Expense, TravelLeg, User  # noqa: F401
+from app.models import Demand, Expense, ScheduleEntry, User  # noqa: F401
 from app.routes.auth import auth_bp
-from app.routes.claims import claims_bp
+from app.routes.demands import demands_bp
 from app.routes.expenses import expenses_bp
 from app.routes.health import health_bp
-from app.routes.travel_legs import travel_legs_bp
+from app.routes.schedule import schedule_bp
 from app.routes.users import users_bp
 
 
@@ -25,9 +25,9 @@ def create_app(config_class=Config):
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
-    app.register_blueprint(claims_bp, url_prefix="/api/claims")
-    app.register_blueprint(travel_legs_bp, url_prefix="/api/travel-legs")
+    app.register_blueprint(demands_bp, url_prefix="/api/demands")
     app.register_blueprint(expenses_bp, url_prefix="/api/expenses")
+    app.register_blueprint(schedule_bp, url_prefix="/api/schedule")
     app.register_blueprint(users_bp, url_prefix="/api/users")
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)

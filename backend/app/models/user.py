@@ -18,7 +18,11 @@ class User(db.Model):
         default=lambda: datetime.now(timezone.utc),
     )
 
-    claims = db.relationship("Claim", back_populates="user", cascade="all, delete-orphan")
+    demands = db.relationship("Demand", back_populates="user", cascade="all, delete-orphan")
+    expenses = db.relationship("Expense", back_populates="user", cascade="all, delete-orphan")
+    schedule_entries = db.relationship(
+        "ScheduleEntry", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

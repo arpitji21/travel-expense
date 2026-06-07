@@ -12,20 +12,30 @@ def register():
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
+    role = (data.get("role") or "sales").strip().lower()
 
     if not email or not password:
         return jsonify({"message": "Email and password are required."}), 400
 
+    if len(password) < 6:
+        return jsonify({"message": "Password must be at least 6 characters."}), 400
+
+    if role not in {"sales", "finance"}:
+        return jsonify({"message": "Department must be sales or finance."}), 400
+
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "Email is already registered."}), 409
 
-    user = User(email=email)
+    user = User(email=email, role=role)
     user.set_password(password)
 
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"message": "User registered."}), 201
+    # Log the new user in straight away.
+    access_token = create_access_token(identity=str(user.id))
+
+    return jsonify({"accessToken": access_token, "user": user.to_dict()}), 201
 
 
 @auth_bp.post("/login")
