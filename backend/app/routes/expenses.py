@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required
 from app.extensions import db
 from app.email_utils import send_email
 from app.models import Expense, User
+from app.notifications import finance_emails, finance_user_ids, push, push_many
 from app.storage import save_receipt
 from app.routes.helpers import (
     get_expense_for_user,
@@ -101,6 +102,11 @@ def create_expense():
 
     db.session.add(expense)
     db.session.commit()
+
+    # Let finance know a new expense is waiting for review.
+    msg = f"{user.email} submitted a {category} expense of {currency} {float(amount):,.2f}."
+    push_many(finance_user_ids(), msg, "expense")
+    send_email(finance_emails(), "New expense submitted", f"{msg}\n\n— LarkPilot")
 
     return jsonify({"expense": expense.to_dict()}), 201
 
@@ -223,6 +229,7 @@ def _notify_expense_owner(expense, status):
     )
 
     send_email(owner.email, subject, body)
+    push(owner.id, f"Your {expense.category} expense of {amount} was {status}.", "expense")
 
 
 def _notify_finance(expense, status):
@@ -249,6 +256,7 @@ def _notify_finance(expense, status):
     )
 
     send_email(finance_emails, subject, body)
+    push_many(finance_user_ids(), f"Expense {amount} {status} for {owner_email}.", "expense")
 
 
 def _finance_status_change(expense_id, from_status, to_status, action_label):

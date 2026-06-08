@@ -2,7 +2,9 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from app.extensions import db
+from app.email_utils import send_email
 from app.models import ScheduleEntry, User
+from app.notifications import finance_emails, finance_user_ids, push, push_many
 from app.routes.helpers import (
     get_schedule_entry_for_user,
     json_body,
@@ -88,6 +90,16 @@ def create_schedule_entry():
     db.session.add(entry)
     db.session.commit()
 
+    # Let the salesperson know they have a new visit.
+    visit_msg = f"New visit assigned: {place} on {entry_date.isoformat()}."
+    push(salesperson.id, visit_msg, "visit")
+    if salesperson.email:
+        send_email(
+            salesperson.email,
+            "New visit assigned",
+            f"Hi {salesperson.email},\n\n{visit_msg}\n\n— LarkPilot",
+        )
+
     return jsonify({"entry": entry.to_dict()}), 201
 
 
@@ -121,6 +133,7 @@ def update_schedule_entry(entry_id):
         return jsonify({"message": "Schedule entry not found."}), 404
 
     data = json_body()
+    was_demand_expected = entry.demand_expected
 
     # Both roles: mark the visit done and flag/clear expected demand.
     if "done" in data:
@@ -132,7 +145,7 @@ def update_schedule_entry(entry_id):
     if "demandNote" in data:
         entry.demand_note = (data.get("demandNote") or "").strip() or None
 
-    # Only finance owns the assignment itself (hospital, date, time, note).
+    # Only finance owns the assignment + marks a flag handled.
     if user.role == "finance":
         if "place" in data:
             place = (data.get("place") or "").strip()
@@ -143,6 +156,9 @@ def update_schedule_entry(entry_id):
         if "note" in data:
             entry.note = (data.get("note") or "").strip() or None
 
+        if "demandHandled" in data:
+            entry.demand_handled = bool(data.get("demandHandled"))
+
         try:
             if "entryDate" in data:
                 entry.entry_date = parse_date(data.get("entryDate"), "entryDate", required=True)
@@ -152,6 +168,13 @@ def update_schedule_entry(entry_id):
             return validation_error(str(exc))
 
     db.session.commit()
+
+    # Notify finance when a salesperson newly flags expected demand.
+    if not was_demand_expected and entry.demand_expected:
+        note = entry.demand_note or ""
+        msg = f"{user.email} flagged expected demand at {entry.place}" + (f": {note}" if note else ".")
+        push_many(finance_user_ids(), msg, "demand")
+        send_email(finance_emails(), "Expected demand flagged", f"{msg}\n\n— LarkPilot")
 
     return jsonify({"entry": entry.to_dict()})
 

@@ -5,14 +5,25 @@ from flask_cors import CORS
 
 from app.config import Config
 from app.extensions import db, jwt, migrate
-from app.models import Demand, Expense, Material, ScheduleEntry, StockItem, User  # noqa: F401
+from app.models import (  # noqa: F401
+    Demand,
+    Expense,
+    Material,
+    Notification,
+    ScheduleEntry,
+    StockItem,
+    Target,
+    User,
+)
 from app.routes.auth import auth_bp
 from app.routes.demands import demands_bp
 from app.routes.expenses import expenses_bp
 from app.routes.health import health_bp
 from app.routes.materials import materials_bp
+from app.routes.notifications import notifications_bp
 from app.routes.schedule import schedule_bp
 from app.routes.stock import stock_bp
+from app.routes.targets import targets_bp
 from app.routes.users import users_bp
 
 
@@ -30,8 +41,10 @@ def create_app(config_class=Config):
     app.register_blueprint(demands_bp, url_prefix="/api/demands")
     app.register_blueprint(expenses_bp, url_prefix="/api/expenses")
     app.register_blueprint(materials_bp, url_prefix="/api/materials")
+    app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
     app.register_blueprint(schedule_bp, url_prefix="/api/schedule")
     app.register_blueprint(stock_bp, url_prefix="/api/stock")
+    app.register_blueprint(targets_bp, url_prefix="/api/targets")
     app.register_blueprint(users_bp, url_prefix="/api/users")
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)

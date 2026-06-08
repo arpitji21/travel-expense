@@ -3,8 +3,28 @@ import { Link } from 'react-router-dom';
 import { PageLoading } from '../components/Loader';
 import ScheduleList from '../components/ScheduleList';
 import StatusBadge from '../components/StatusBadge';
-import { fetchDemands, fetchExpenses, fetchSchedule } from '../lib/salesApi';
+import { fetchDemands, fetchExpenses, fetchSchedule, fetchTargets } from '../lib/salesApi';
 import { formatCurrency, formatDate } from '../lib/formatters';
+
+const currentMonth = () => new Date().toISOString().slice(0, 7);
+
+function TargetBar({ label, value, target }) {
+  const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : value > 0 ? 100 : 0;
+  return (
+    <div>
+      <div className="flex justify-between text-sm">
+        <span className="text-zinc-300">{label}</span>
+        <span className="font-semibold text-zinc-100">
+          {value}
+          <span className="text-zinc-500"> / {target || '—'}</span>
+        </span>
+      </div>
+      <div className="mt-1.5 h-2 rounded-full bg-white/10">
+        <div className="h-2 rounded-full bg-brand-gradient" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ label, value, to, linkText, sub }) {
   return (
@@ -25,14 +45,21 @@ function DashboardPage() {
   const [demands, setDemands] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [schedule, setSchedule] = useState([]);
+  const [target, setTarget] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchDemands(), fetchExpenses(), fetchSchedule()])
-      .then(([demandList, expenseList, scheduleEntries]) => {
+    Promise.all([
+      fetchDemands(),
+      fetchExpenses(),
+      fetchSchedule(),
+      fetchTargets({ period: currentMonth() })
+    ])
+      .then(([demandList, expenseList, scheduleEntries, targetList]) => {
         setDemands(demandList);
         setExpenses(expenseList);
         setSchedule(scheduleEntries);
+        setTarget(targetList[0] || null);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -72,6 +99,16 @@ function DashboardPage() {
           <ScheduleList entries={todaySchedule} emptyText="No visits assigned for today. Finance assigns your visits." />
         </div>
       </section>
+
+      {target ? (
+        <section className="glass-card p-5">
+          <h3 className="section-title">This month&apos;s targets</h3>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <TargetBar label="Visits completed" value={target.visitsDone} target={target.visitsTarget} />
+            <TargetBar label="Demands booked" value={target.demandsBooked} target={target.demandsTarget} />
+          </div>
+        </section>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-3">
         <StatCard label="Hospital demands" value={demands.length} to="/demands" linkText="View demands" />

@@ -97,6 +97,33 @@ export async function deleteExpense(expenseId) {
   return response.data;
 }
 
+// Notifications (in-app bell)
+export async function fetchNotifications() {
+  const response = await apiClient.get('/notifications');
+  return response.data; // { notifications, unread }
+}
+
+export async function markNotificationsRead() {
+  const response = await apiClient.post('/notifications/read');
+  return response.data;
+}
+
+// Targets & performance
+export async function fetchTargets(params = {}) {
+  const response = await apiClient.get('/targets', { params });
+  return response.data.targets;
+}
+
+export async function upsertTarget(payload) {
+  const response = await apiClient.post('/targets', payload);
+  return response.data.target;
+}
+
+export async function deleteTarget(targetId) {
+  const response = await apiClient.delete(`/targets/${targetId}`);
+  return response.data;
+}
+
 // Marketing & sales materials (finance uploads; everyone views)
 export async function fetchMaterials() {
   const response = await apiClient.get('/materials');

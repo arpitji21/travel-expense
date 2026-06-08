@@ -65,7 +65,7 @@
 
   /* Nav pills */
   .nav-pill {
-    @apply inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium text-white/80 transition hover:bg-white/15 hover:text-white;
+    @apply inline-flex flex-none items-center gap-2 whitespace-nowrap rounded-xl border border-transparent px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/15 hover:text-white;
   }
   .nav-pill-active {
     @apply bg-white/20 text-white shadow-inner;

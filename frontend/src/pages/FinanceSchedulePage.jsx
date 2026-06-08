@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react';
 import { PageLoading } from '../components/Loader';
 import SalespersonFilter from '../components/SalespersonFilter';
 import {
+  createDemand,
   createScheduleEntry,
   deleteScheduleEntry,
   fetchSalespeople,
-  fetchSchedule
+  fetchSchedule,
+  fetchStock,
+  updateScheduleEntry
 } from '../lib/salesApi';
 import { formatDate } from '../lib/formatters';
 
@@ -23,8 +26,16 @@ function FinanceSchedulePage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
+  // Create-demand-from-flag panel state.
+  const [stock, setStock] = useState([]);
+  const [demandFor, setDemandFor] = useState(null); // the flagged visit
+  const [demandStockId, setDemandStockId] = useState('');
+  const [demandQty, setDemandQty] = useState(1);
+  const [demandSaving, setDemandSaving] = useState(false);
+
   useEffect(() => {
     fetchSalespeople().then(setSalespeople).catch(() => setSalespeople([]));
+    fetchStock().then(setStock).catch(() => setStock([]));
   }, []);
 
   async function loadEntries(userId, date) {
@@ -82,6 +93,55 @@ function FinanceSchedulePage() {
       setMessage('Visit removed.');
     } catch (err) {
       setMessage(err.response?.data?.message || 'Unable to remove visit.');
+    }
+  }
+
+  function openDemand(entry) {
+    setDemandFor(entry);
+    setDemandStockId('');
+    setDemandQty(1);
+    setMessage('');
+  }
+
+  async function submitDemand(event) {
+    event.preventDefault();
+    if (!demandStockId) {
+      setMessage('Choose a product from stock.');
+      return;
+    }
+    const item = stock.find((s) => String(s.id) === String(demandStockId));
+    if (item && Number(demandQty) > item.quantity) {
+      setMessage(`Only ${item.quantity} ${item.unit || 'units'} of ${item.product} available.`);
+      return;
+    }
+
+    setDemandSaving(true);
+    try {
+      await createDemand({
+        userId: demandFor.userId,
+        hospitalName: demandFor.place,
+        stockItemId: Number(demandStockId),
+        quantity: Number(demandQty)
+      });
+      await updateScheduleEntry(demandFor.id, { demandHandled: true });
+      await loadEntries(selectedUserId, dateFilter);
+      setDemandFor(null);
+      setMessage('Demand created from the flag and stock updated.');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Unable to create demand.');
+    } finally {
+      setDemandSaving(false);
+    }
+  }
+
+  async function dismissFlag(entry) {
+    setMessage('');
+    try {
+      await updateScheduleEntry(entry.id, { demandHandled: true });
+      await loadEntries(selectedUserId, dateFilter);
+      setMessage('Flag marked handled.');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Unable to update.');
     }
   }
 
@@ -184,6 +244,54 @@ function FinanceSchedulePage() {
         </form>
       ) : null}
 
+      {demandFor ? (
+        <form onSubmit={submitDemand} className="glass-card space-y-4 p-6">
+          <p className="section-title">Create demand from flag</p>
+          <p className="text-sm text-zinc-400">
+            {demandFor.place} · {demandFor.salespersonEmail}
+            {demandFor.demandNote ? ` — "${demandFor.demandNote}"` : ''}
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="field-label">Product (from stock)</span>
+              <select
+                value={demandStockId}
+                onChange={(event) => setDemandStockId(event.target.value)}
+                required
+                className="input"
+              >
+                <option value="">Select product</option>
+                {stock.map((item) => (
+                  <option key={item.id} value={item.id} disabled={item.quantity <= 0}>
+                    {item.product} (available: {item.quantity} {item.unit || 'units'})
+                    {item.quantity <= 0 ? ' — out of stock' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="field-label">Quantity</span>
+              <input
+                type="number"
+                min="1"
+                value={demandQty}
+                onChange={(event) => setDemandQty(event.target.value)}
+                required
+                className="input"
+              />
+            </label>
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" disabled={demandSaving} className="btn-primary">
+              {demandSaving ? 'Creating...' : 'Create demand'}
+            </button>
+            <button type="button" onClick={() => setDemandFor(null)} className="btn-ghost">
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+
       {loading ? (
         <PageLoading label="Loading visits..." />
       ) : (
@@ -226,13 +334,25 @@ function FinanceSchedulePage() {
                       </td>
                       <td className="px-5 py-3">
                         {entry.demandExpected ? (
-                          <div>
-                            <span className="rounded-full border border-brand-500/30 bg-brand-500/10 px-2 py-0.5 text-xs font-semibold text-brand-300">
+                          <div className="space-y-1.5">
+                            <span className="inline-block rounded-full border border-brand-500/30 bg-brand-500/10 px-2 py-0.5 text-xs font-semibold text-brand-300">
                               Demand expected
                             </span>
                             {entry.demandNote ? (
-                              <span className="mt-1 block text-xs text-zinc-400">{entry.demandNote}</span>
+                              <span className="block text-xs text-zinc-400">{entry.demandNote}</span>
                             ) : null}
+                            {entry.demandHandled ? (
+                              <span className="block text-xs font-medium text-emerald-300">✓ Handled</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                <button type="button" onClick={() => openDemand(entry)} className="btn-primary btn-sm">
+                                  Create demand
+                                </button>
+                                <button type="button" onClick={() => dismissFlag(entry)} className="btn-ghost btn-sm">
+                                  Dismiss
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <span className="text-xs text-zinc-500">—</span>

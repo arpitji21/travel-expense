@@ -15,6 +15,7 @@ import FinanceExpensesPage from './pages/FinanceExpensesPage.jsx';
 import FinanceStockPage from './pages/FinanceStockPage.jsx';
 import FinanceMaterialsPage from './pages/FinanceMaterialsPage.jsx';
 import FinanceSchedulePage from './pages/FinanceSchedulePage.jsx';
+import FinanceTargetsPage from './pages/FinanceTargetsPage.jsx';
 import FinanceSalespeoplePage from './pages/FinanceSalespeoplePage.jsx';
 import FinanceSalespersonProfilePage from './pages/FinanceSalespersonProfilePage.jsx';
 
@@ -29,6 +30,7 @@ function App() {
               <Route path="/schedule" element={<FinanceSchedulePage />} />
               <Route path="/stock" element={<FinanceStockPage />} />
               <Route path="/materials" element={<FinanceMaterialsPage />} />
+              <Route path="/targets" element={<FinanceTargetsPage />} />
               <Route path="/expenses" element={<FinanceExpensesPage />} />
               <Route path="/salespeople" element={<FinanceSalespeoplePage />} />
               <Route path="/salespeople/:userId" element={<FinanceSalespersonProfilePage />} />

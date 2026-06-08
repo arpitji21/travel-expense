@@ -2,7 +2,9 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from app.extensions import db
-from app.models import Demand, StockItem
+from app.email_utils import send_email
+from app.models import Demand, StockItem, User
+from app.notifications import finance_emails, finance_user_ids, push_many
 from app.routes.helpers import (
     get_demand_for_user,
     json_body,
@@ -107,6 +109,14 @@ def create_demand():
     if quantity < 1:
         return validation_error("quantity must be at least 1.")
 
+    # Finance can book a demand on a salesperson's behalf (e.g. from a flagged
+    # visit); otherwise the demand belongs to the salesperson creating it.
+    owner = user
+    if user.role == "finance" and data.get("userId"):
+        owner = User.query.get(data.get("userId"))
+        if not owner:
+            return validation_error("Salesperson not found.")
+
     # A demand can be booked against company stock (preferred) or, for backward
     # compatibility, carry a free-text product with no stock tracking.
     stock_item = None
@@ -127,7 +137,7 @@ def create_demand():
         return validation_error(error_message)
 
     demand = Demand(
-        user_id=user.id,
+        user_id=owner.id,
         hospital_name=hospital_name,
         hospital_address=hospital_address,
         product=product,
@@ -138,6 +148,12 @@ def create_demand():
 
     db.session.add(demand)
     db.session.commit()
+
+    # Notify finance when a salesperson books a demand (not when finance does it).
+    if user.role != "finance":
+        msg = f"{owner.email} booked a demand: {product} x{quantity} for {hospital_name}."
+        push_many(finance_user_ids(), msg, "demand")
+        send_email(finance_emails(), "New demand booked", f"{msg}\n\n— LarkPilot")
 
     return jsonify({"demand": demand.to_dict()}), 201
 

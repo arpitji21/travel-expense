@@ -16,6 +16,8 @@ class ScheduleEntry(db.Model):
     # Salesperson can flag that this hospital may have demand, for finance to see.
     demand_expected = db.Column(db.Boolean, nullable=False, default=False)
     demand_note = db.Column(db.Text, nullable=True)
+    # Finance marks the flag handled once they've acted on it (created a demand etc.).
+    demand_handled = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -42,6 +44,7 @@ class ScheduleEntry(db.Model):
             "done": self.done,
             "demandExpected": self.demand_expected,
             "demandNote": self.demand_note,
+            "demandHandled": self.demand_handled,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }
