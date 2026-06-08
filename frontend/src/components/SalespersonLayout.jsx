@@ -2,7 +2,7 @@ import AppShell from './AppShell';
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
-  { to: '/schedule', label: 'Schedule' },
+  { to: '/schedule', label: 'Visits' },
   { to: '/demands', label: 'Demands' },
   { to: '/stock', label: 'Stock' },
   { to: '/materials', label: 'Materials' },

@@ -52,6 +52,11 @@ function ScheduleList({ entries, onToggleDone, onDelete, emptyText = 'No schedul
                     <p className={`font-semibold ${entry.done ? 'text-zinc-400 line-through' : 'text-white'}`}>
                       {entry.entryTime ? <span className="text-zinc-400">{entry.entryTime} · </span> : null}
                       {entry.place}
+                      {entry.demandExpected ? (
+                        <span className="ml-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-2 py-0.5 align-middle text-xs font-semibold text-brand-300">
+                          Demand expected
+                        </span>
+                      ) : null}
                     </p>
                     {entry.note ? <p className="text-sm text-zinc-400">{entry.note}</p> : null}
                   </div>

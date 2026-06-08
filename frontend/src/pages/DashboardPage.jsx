@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageLoading } from '../components/Loader';
 import ScheduleList from '../components/ScheduleList';
 import StatusBadge from '../components/StatusBadge';
-import TodayRoute from '../components/TodayRoute';
-import { fetchDemands, fetchExpenses, fetchSchedule, fetchTodayRoute } from '../lib/salesApi';
+import { fetchDemands, fetchExpenses, fetchSchedule } from '../lib/salesApi';
 import { formatCurrency, formatDate } from '../lib/formatters';
 
 function StatCard({ label, value, to, linkText, sub }) {
@@ -25,16 +24,14 @@ function StatCard({ label, value, to, linkText, sub }) {
 function DashboardPage() {
   const [demands, setDemands] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  const [route, setRoute] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchDemands(), fetchExpenses(), fetchTodayRoute(), fetchSchedule()])
-      .then(([demandList, expenseList, routeStops, scheduleEntries]) => {
+    Promise.all([fetchDemands(), fetchExpenses(), fetchSchedule()])
+      .then(([demandList, expenseList, scheduleEntries]) => {
         setDemands(demandList);
         setExpenses(expenseList);
-        setRoute(routeStops);
         setSchedule(scheduleEntries);
       })
       .finally(() => setLoading(false));
@@ -64,17 +61,15 @@ function DashboardPage() {
         <h2 className="text-3xl font-extrabold tracking-tight">Your activity</h2>
       </div>
 
-      <TodayRoute route={route} today={new Date()} />
-
       <section className="glass-card">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <h3 className="section-title">Today&apos;s schedule</h3>
+          <h3 className="section-title">Today&apos;s visits</h3>
           <Link to="/schedule" className="text-sm font-semibold text-brand-400 hover:text-brand-300">
-            Manage schedule
+            View visits
           </Link>
         </div>
         <div className="px-5 py-4">
-          <ScheduleList entries={todaySchedule} emptyText="Nothing scheduled for today. Add visits on the Schedule page." />
+          <ScheduleList entries={todaySchedule} emptyText="No visits assigned for today. Finance assigns your visits." />
         </div>
       </section>
 

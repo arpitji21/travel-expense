@@ -58,44 +58,6 @@ def _reconcile_stock(old_sid, old_status, old_qty, new_sid, new_status, new_qty)
     return None
 
 
-@demands_bp.get("/route")
-@jwt_required()
-def todays_route():
-    """Today's route: hospitals with open demands, grouped into one stop each."""
-    user, error = require_current_user()
-
-    if error:
-        return error
-
-    query = Demand.query.filter_by(status="open")
-
-    if user.role == "finance":
-        user_id = request.args.get("userId", type=int)
-        if user_id:
-            query = query.filter_by(user_id=user_id)
-    else:
-        query = query.filter_by(user_id=user.id)
-
-    demands = query.order_by(Demand.hospital_name.asc(), Demand.created_at.asc()).all()
-
-    stops = {}
-    order = []
-    for demand in demands:
-        key = (demand.hospital_name, demand.hospital_address or "")
-        if key not in stops:
-            stops[key] = {
-                "hospitalName": demand.hospital_name,
-                "hospitalAddress": demand.hospital_address,
-                "items": [],
-            }
-            order.append(key)
-        stops[key]["items"].append(
-            {"product": demand.product, "quantity": demand.quantity, "note": demand.note}
-        )
-
-    return jsonify({"route": [stops[key] for key in order]})
-
-
 @demands_bp.get("")
 @jwt_required()
 def list_demands():

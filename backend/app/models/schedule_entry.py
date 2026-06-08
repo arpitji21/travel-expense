@@ -13,6 +13,9 @@ class ScheduleEntry(db.Model):
     place = db.Column(db.String(255), nullable=False)
     note = db.Column(db.Text, nullable=True)
     done = db.Column(db.Boolean, nullable=False, default=False)
+    # Salesperson can flag that this hospital may have demand, for finance to see.
+    demand_expected = db.Column(db.Boolean, nullable=False, default=False)
+    demand_note = db.Column(db.Text, nullable=True)
     created_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -37,6 +40,8 @@ class ScheduleEntry(db.Model):
             "place": self.place,
             "note": self.note,
             "done": self.done,
+            "demandExpected": self.demand_expected,
+            "demandNote": self.demand_note,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }

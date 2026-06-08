@@ -14,6 +14,7 @@ import FinanceDemandsPage from './pages/FinanceDemandsPage.jsx';
 import FinanceExpensesPage from './pages/FinanceExpensesPage.jsx';
 import FinanceStockPage from './pages/FinanceStockPage.jsx';
 import FinanceMaterialsPage from './pages/FinanceMaterialsPage.jsx';
+import FinanceSchedulePage from './pages/FinanceSchedulePage.jsx';
 import FinanceSalespeoplePage from './pages/FinanceSalespeoplePage.jsx';
 import FinanceSalespersonProfilePage from './pages/FinanceSalespersonProfilePage.jsx';
 
@@ -25,6 +26,7 @@ function App() {
           <FinanceLayout user={user}>
             <Routes>
               <Route path="/" element={<FinanceDemandsPage />} />
+              <Route path="/schedule" element={<FinanceSchedulePage />} />
               <Route path="/stock" element={<FinanceStockPage />} />
               <Route path="/materials" element={<FinanceMaterialsPage />} />
               <Route path="/expenses" element={<FinanceExpensesPage />} />

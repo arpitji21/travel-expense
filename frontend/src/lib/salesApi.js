@@ -26,9 +26,8 @@ export async function fetchUser(userId) {
   return response.data.user;
 }
 
-// Daily schedule
-export async function fetchSchedule(userId) {
-  const params = userId ? { userId } : {};
+// Daily schedule / assigned visits
+export async function fetchSchedule(params = {}) {
   const response = await apiClient.get('/schedule', { params });
   return response.data.entries;
 }
@@ -53,13 +52,6 @@ export async function fetchDemands(userId) {
   const params = userId ? { userId } : {};
   const response = await apiClient.get('/demands', { params });
   return response.data.demands;
-}
-
-// Today's route: hospitals (grouped) that have open demands.
-export async function fetchTodayRoute(userId) {
-  const params = userId ? { userId } : {};
-  const response = await apiClient.get('/demands/route', { params });
-  return response.data.route;
 }
 
 export async function createDemand(payload) {
