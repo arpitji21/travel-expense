@@ -23,10 +23,12 @@ def mail_enabled():
 
 
 def _deliver(host, port, username, password, sender, to, subject, body):
+    recipients = [to] if isinstance(to, str) else list(to)
+
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = sender
-    msg["To"] = to
+    msg["To"] = ", ".join(recipients)
     msg.set_content(body)
 
     try:

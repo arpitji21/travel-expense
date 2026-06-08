@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required
 
 from app.extensions import db
 from app.email_utils import send_email
-from app.models import Expense
+from app.models import Expense, User
 from app.storage import save_receipt
 from app.routes.helpers import (
     get_expense_for_user,
@@ -225,6 +225,32 @@ def _notify_expense_owner(expense, status):
     send_email(owner.email, subject, body)
 
 
+def _notify_finance(expense, status):
+    """Email the whole finance department when an expense is approved/reimbursed."""
+    finance_emails = [
+        user.email for user in User.query.filter_by(role="finance").all() if user.email
+    ]
+
+    if not finance_emails:
+        return
+
+    amount = f"{expense.currency} {float(expense.amount or 0):,.2f}"
+    date_str = expense.expense_date.isoformat() if expense.expense_date else ""
+    owner_email = expense.user.email if expense.user else "a salesperson"
+    verb = "APPROVED" if status == "approved" else "marked REIMBURSED"
+
+    subject = f"[Finance] Expense {amount} {status} - {owner_email}"
+    body = (
+        f"Hello Finance team,\n\n"
+        f"The {expense.category} expense of {amount}"
+        f"{f' dated {date_str}' if date_str else ''} submitted by {owner_email} "
+        f"has been {verb}.\n\n"
+        f"— LarkPilot"
+    )
+
+    send_email(finance_emails, subject, body)
+
+
 def _finance_status_change(expense_id, from_status, to_status, action_label):
     _, error = require_finance_user()
 
@@ -245,6 +271,10 @@ def _finance_status_change(expense_id, from_status, to_status, action_label):
     # Notify the salesperson on approval / rejection / reimbursement (no-op if mail is off).
     if to_status in ("approved", "rejected", "reimbursed"):
         _notify_expense_owner(expense, to_status)
+
+    # Also notify the finance department on approval / reimbursement.
+    if to_status in ("approved", "reimbursed"):
+        _notify_finance(expense, to_status)
 
     return jsonify({"expense": expense.to_dict()})
 
