@@ -14,6 +14,10 @@ class Demand(db.Model):
     quantity = db.Column(db.Integer, nullable=False, default=1)
     note = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(50), nullable=False, default="open", index=True)
+    # Company stock this demand draws from (null = legacy/free-text product).
+    stock_item_id = db.Column(
+        db.Integer, db.ForeignKey("stock_items.id"), nullable=True, index=True
+    )
     created_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -27,6 +31,7 @@ class Demand(db.Model):
     )
 
     user = db.relationship("User", back_populates="demands")
+    stock_item = db.relationship("StockItem", back_populates="demands")
 
     def to_dict(self):
         return {
@@ -39,6 +44,7 @@ class Demand(db.Model):
             "quantity": self.quantity,
             "note": self.note,
             "status": self.status,
+            "stockItemId": self.stock_item_id,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }

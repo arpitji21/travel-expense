@@ -37,7 +37,7 @@ function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Expenses</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Expenses</p>
           <h2 className="text-3xl font-extrabold tracking-tight">My expense claims</h2>
         </div>
         <Link to="/expenses/new" className="btn-primary">
@@ -46,7 +46,7 @@ function ExpensesPage() {
       </div>
 
       {message ? (
-        <p className="rounded-xl border border-zinc-200 bg-white/70 px-3 py-2 text-sm text-zinc-700">{message}</p>
+        <p className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-zinc-200">{message}</p>
       ) : null}
 
       {loading ? (
@@ -54,7 +54,7 @@ function ExpensesPage() {
       ) : (
         <section className="glass-card">
           {expenses.length ? (
-            <div className="divide-y divide-zinc-200/70">
+            <div className="divide-y divide-white/10">
               {expenses.map((expense) => (
                 <div key={expense.id} className="grid gap-3 px-5 py-4 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
@@ -63,10 +63,10 @@ function ExpensesPage() {
                       <StatusBadge status={expense.status} />
                     </div>
                     {expense.description ? (
-                      <p className="mt-1 text-sm text-zinc-600">{expense.description}</p>
+                      <p className="mt-1 text-sm text-zinc-400">{expense.description}</p>
                     ) : null}
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-600">
-                      <span className="font-semibold text-zinc-900">
+                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-400">
+                      <span className="font-semibold text-white">
                         {formatCurrency(expense.amount, expense.currency)}
                       </span>
                       <span>{formatDate(expense.expenseDate)}</span>
@@ -75,12 +75,12 @@ function ExpensesPage() {
                           href={buildAssetUrl(expense.receiptUrl)}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-semibold text-brand-600 hover:text-brand-700"
+                          className="font-semibold text-brand-400 hover:text-brand-300"
                         >
                           View bill
                         </a>
                       ) : (
-                        <span className="text-rose-600">No bill attached</span>
+                        <span className="text-rose-400">No bill attached</span>
                       )}
                     </div>
                   </div>
@@ -95,7 +95,7 @@ function ExpensesPage() {
               ))}
             </div>
           ) : (
-            <p className="px-5 py-10 text-center text-sm text-zinc-500">No expenses raised yet.</p>
+            <p className="px-5 py-10 text-center text-sm text-zinc-400">No expenses raised yet.</p>
           )}
         </section>
       )}

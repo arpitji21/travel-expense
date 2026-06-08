@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from app.extensions import db
-from app.models import Demand
+from app.models import Demand, StockItem
 from app.routes.helpers import (
     get_demand_for_user,
     json_body,
@@ -13,6 +13,49 @@ from app.routes.helpers import (
 demands_bp = Blueprint("demands", __name__)
 
 VALID_STATUSES = {"open", "fulfilled", "cancelled"}
+
+
+def _reserved(status, quantity):
+    """Units a demand holds out of stock: everything unless it's cancelled."""
+    return quantity if status != "cancelled" else 0
+
+
+def _reconcile_stock(old_sid, old_status, old_qty, new_sid, new_status, new_qty):
+    """Adjust company stock as a demand changes.
+
+    A demand "reserves" its quantity from its stock item while it is not
+    cancelled. This moves stock between the old and new reservation. Returns an
+    error message string if there isn't enough stock (caller should rollback),
+    otherwise None.
+    """
+    old_reserved = _reserved(old_status, old_qty)
+    new_reserved = _reserved(new_status, new_qty)
+
+    if old_sid == new_sid:
+        if not new_sid:
+            return None
+        item = StockItem.query.get(new_sid)
+        if not item:
+            return None  # legacy/free-text demand, no stock to track
+        net = new_reserved - old_reserved  # >0 reserve more, <0 release
+        if net > 0 and item.quantity < net:
+            return f"Only {item.quantity} {item.unit or 'units'} of {item.product} available."
+        item.quantity -= net
+        return None
+
+    # Stock item changed: release the old, reserve on the new.
+    if old_sid:
+        old_item = StockItem.query.get(old_sid)
+        if old_item:
+            old_item.quantity += old_reserved
+    if new_sid:
+        new_item = StockItem.query.get(new_sid)
+        if not new_item:
+            return "Selected stock item not found."
+        if new_item.quantity < new_reserved:
+            return f"Only {new_item.quantity} {new_item.unit or 'units'} of {new_item.product} available."
+        new_item.quantity -= new_reserved
+    return None
 
 
 @demands_bp.get("/route")
@@ -89,12 +132,10 @@ def create_demand():
     product = (data.get("product") or "").strip()
     note = (data.get("note") or "").strip() or None
     quantity = data.get("quantity", 1)
+    stock_item_id = data.get("stockItemId")
 
     if not hospital_name:
         return validation_error("hospitalName is required.")
-
-    if not product:
-        return validation_error("product is required.")
 
     try:
         quantity = int(quantity)
@@ -104,6 +145,25 @@ def create_demand():
     if quantity < 1:
         return validation_error("quantity must be at least 1.")
 
+    # A demand can be booked against company stock (preferred) or, for backward
+    # compatibility, carry a free-text product with no stock tracking.
+    stock_item = None
+    if stock_item_id:
+        stock_item = StockItem.query.get(stock_item_id)
+        if not stock_item:
+            return validation_error("Selected stock item not found.")
+        if not product:
+            product = stock_item.product
+
+    if not product:
+        return validation_error("product is required.")
+
+    # Draw the quantity down from stock; fail if not enough is available.
+    error_message = _reconcile_stock(None, "cancelled", 0, stock_item_id, "open", quantity)
+    if error_message:
+        db.session.rollback()
+        return validation_error(error_message)
+
     demand = Demand(
         user_id=user.id,
         hospital_name=hospital_name,
@@ -111,6 +171,7 @@ def create_demand():
         product=product,
         quantity=quantity,
         note=note,
+        stock_item_id=stock_item.id if stock_item else None,
     )
 
     db.session.add(demand)
@@ -150,6 +211,11 @@ def update_demand(demand_id):
 
     data = json_body()
 
+    # Capture the pre-change reservation so we can reconcile stock afterwards.
+    old_sid = demand.stock_item_id
+    old_status = demand.status
+    old_quantity = demand.quantity
+
     if "hospitalName" in data:
         hospital_name = (data.get("hospitalName") or "").strip()
         if not hospital_name:
@@ -158,6 +224,17 @@ def update_demand(demand_id):
 
     if "hospitalAddress" in data:
         demand.hospital_address = (data.get("hospitalAddress") or "").strip() or None
+
+    if "stockItemId" in data:
+        new_sid = data.get("stockItemId")
+        if new_sid:
+            stock_item = StockItem.query.get(new_sid)
+            if not stock_item:
+                return validation_error("Selected stock item not found.")
+            demand.stock_item_id = stock_item.id
+            demand.product = stock_item.product
+        else:
+            demand.stock_item_id = None
 
     if "product" in data:
         product = (data.get("product") or "").strip()
@@ -183,6 +260,16 @@ def update_demand(demand_id):
             return validation_error("status must be open, fulfilled, or cancelled.")
         demand.status = status
 
+    # Move stock between the old and new reservation (restores it on cancel,
+    # re-reserves on re-open, applies quantity deltas, etc.).
+    error_message = _reconcile_stock(
+        old_sid, old_status, old_quantity,
+        demand.stock_item_id, demand.status, demand.quantity,
+    )
+    if error_message:
+        db.session.rollback()
+        return validation_error(error_message)
+
     db.session.commit()
 
     return jsonify({"demand": demand.to_dict()})
@@ -200,6 +287,12 @@ def delete_demand(demand_id):
 
     if not demand:
         return jsonify({"message": "Demand not found."}), 404
+
+    # Return any still-reserved stock to the company pool before deleting.
+    if demand.stock_item_id and demand.status != "cancelled":
+        stock_item = StockItem.query.get(demand.stock_item_id)
+        if stock_item:
+            stock_item.quantity += demand.quantity
 
     db.session.delete(demand)
     db.session.commit()

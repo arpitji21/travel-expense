@@ -26,7 +26,7 @@ function FinanceDemandsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Demands</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Demands</p>
           <h2 className="text-3xl font-extrabold tracking-tight">Hospital demand list</h2>
         </div>
         <SalespersonFilter salespeople={salespeople} value={selectedUserId} onChange={setSelectedUserId} />
@@ -39,7 +39,7 @@ function FinanceDemandsPage() {
           {demands.length ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-zinc-200/70 bg-white/50 text-xs uppercase tracking-wide text-zinc-500">
+                <thead className="border-b border-white/10 bg-white/[0.04] text-xs uppercase tracking-wide text-zinc-400">
                   <tr>
                     <th className="px-5 py-3">Hospital</th>
                     <th className="px-5 py-3">Product</th>
@@ -49,22 +49,22 @@ function FinanceDemandsPage() {
                     <th className="px-5 py-3">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-200/70">
+                <tbody className="divide-y divide-white/10">
                   {demands.map((demand) => (
-                    <tr key={demand.id} className="transition hover:bg-white/60">
+                    <tr key={demand.id} className="transition hover:bg-white/10">
                       <td className="px-5 py-3 font-semibold">
                         {demand.hospitalName}
                         {demand.hospitalAddress ? (
-                          <span className="block text-xs font-normal text-zinc-500">{demand.hospitalAddress}</span>
+                          <span className="block text-xs font-normal text-zinc-400">{demand.hospitalAddress}</span>
                         ) : null}
                       </td>
                       <td className="px-5 py-3">
                         {demand.product}
-                        {demand.note ? <span className="block text-xs text-zinc-500">{demand.note}</span> : null}
+                        {demand.note ? <span className="block text-xs text-zinc-400">{demand.note}</span> : null}
                       </td>
                       <td className="px-5 py-3">{demand.quantity}</td>
-                      <td className="px-5 py-3 text-zinc-600">{demand.salespersonEmail}</td>
-                      <td className="px-5 py-3 text-zinc-600">{formatDate(demand.createdAt)}</td>
+                      <td className="px-5 py-3 text-zinc-400">{demand.salespersonEmail}</td>
+                      <td className="px-5 py-3 text-zinc-400">{formatDate(demand.createdAt)}</td>
                       <td className="px-5 py-3">
                         <StatusBadge status={demand.status} />
                       </td>
@@ -74,7 +74,7 @@ function FinanceDemandsPage() {
               </table>
             </div>
           ) : (
-            <p className="px-5 py-10 text-center text-sm text-zinc-500">No demands found.</p>
+            <p className="px-5 py-10 text-center text-sm text-zinc-400">No demands found.</p>
           )}
         </section>
       )}

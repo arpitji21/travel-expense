@@ -1,12 +1,10 @@
-import os
-from uuid import uuid4
-
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
-from werkzeug.utils import secure_filename
 
 from app.extensions import db
+from app.email_utils import send_email
 from app.models import Expense
+from app.storage import save_receipt
 from app.routes.helpers import (
     get_expense_for_user,
     json_body,
@@ -131,14 +129,9 @@ def upload_receipt(expense_id):
     if not allowed_receipt_file(receipt.filename):
         return validation_error("receipt must be a PDF or image file.")
 
-    original_name = secure_filename(receipt.filename)
-    extension = original_name.rsplit(".", 1)[1].lower()
-    filename = f"{uuid4().hex}.{extension}"
-    upload_folder = current_app.config["UPLOAD_FOLDER"]
-    os.makedirs(upload_folder, exist_ok=True)
-    receipt.save(os.path.join(upload_folder, filename))
-
-    expense.receipt_url = f"/uploads/receipts/{filename}"
+    # Stores the bill in Cloudflare R2 when configured (so finance can see it on
+    # ephemeral hosting), otherwise on local disk. Returns the URL to render.
+    expense.receipt_url = save_receipt(receipt)
     db.session.commit()
 
     return jsonify({"expense": expense.to_dict()})
@@ -193,6 +186,45 @@ def update_expense(expense_id):
     return jsonify({"expense": expense.to_dict()})
 
 
+def _notify_expense_owner(expense, status):
+    """Email the salesperson when their expense is approved or reimbursed."""
+    owner = expense.user
+
+    if not owner or not owner.email:
+        return
+
+    amount = f"{expense.currency} {float(expense.amount or 0):,.2f}"
+    date_str = expense.expense_date.isoformat() if expense.expense_date else ""
+
+    if status == "approved":
+        subject = f"Your expense for {amount} was approved"
+        action_line = (
+            "has been APPROVED by the finance department. "
+            "It will be processed for reimbursement shortly."
+        )
+    elif status == "rejected":
+        subject = f"Your expense for {amount} was not approved"
+        action_line = (
+            "was reviewed by the finance department and could NOT be approved. "
+            "Please check the bill and details, or contact finance for clarification."
+        )
+    else:  # reimbursed
+        subject = f"Your expense for {amount} was reimbursed"
+        action_line = (
+            "has been marked REIMBURSED by the finance department. "
+            "The amount should reach you per your usual payout cycle."
+        )
+
+    body = (
+        f"Hi {owner.email},\n\n"
+        f"Your {expense.category} expense of {amount}"
+        f"{f' dated {date_str}' if date_str else ''} {action_line}\n\n"
+        f"— LarkPilot"
+    )
+
+    send_email(owner.email, subject, body)
+
+
 def _finance_status_change(expense_id, from_status, to_status, action_label):
     _, error = require_finance_user()
 
@@ -209,6 +241,10 @@ def _finance_status_change(expense_id, from_status, to_status, action_label):
 
     expense.status = to_status
     db.session.commit()
+
+    # Notify the salesperson on approval / rejection / reimbursement (no-op if mail is off).
+    if to_status in ("approved", "rejected", "reimbursed"):
+        _notify_expense_owner(expense, to_status)
 
     return jsonify({"expense": expense.to_dict()})
 

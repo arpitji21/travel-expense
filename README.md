@@ -1,6 +1,6 @@
-# MediRoute
+# LarkPilot
 
-**MediRoute** — a field-sales companion for hospital demands, daily routes/schedules, and expense reimbursements. Full-stack app with two roles — **salesperson** and **finance**.
+**LarkPilot** — a field-sales companion for hospital demands, daily routes/schedules, and expense reimbursements. Full-stack app with two roles — **salesperson** and **finance**.
 
 - A **salesperson** records hospital demands (hospital, product, quantity) and raises
   expenses by uploading a photo/scan of a bill (e.g. a metro ticket) with amount and date.

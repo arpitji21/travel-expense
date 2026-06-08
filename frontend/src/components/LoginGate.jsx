@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Preloader, { Spinner } from './Loader';
+import LarkWordmark from './LarkWordmark';
 import { fetchMe, login, register } from '../lib/salesApi';
 
 const DEPARTMENTS = {
@@ -139,13 +140,9 @@ function LoginGate({ children }) {
     return (
       <main className="grid min-h-screen place-items-center px-4 py-10">
         <div className="w-full max-w-3xl animate-fade-in text-center">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-2xl shadow-glass">
-            🧭
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight">
-            Welcome to <span className="gradient-text">MediRoute</span>
-          </h1>
-          <p className="mt-2 text-zinc-600">Choose your department to continue.</p>
+          <LarkWordmark className="mx-auto mb-6 h-12 w-auto text-zinc-100" />
+          <h1 className="text-3xl font-extrabold tracking-tight">Field Sales, Demands &amp; Expenses</h1>
+          <p className="mt-2 text-zinc-400">Choose your department to continue.</p>
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2">
             {Object.entries(DEPARTMENTS).map(([key, dept]) => (
@@ -155,11 +152,11 @@ function LoginGate({ children }) {
                 onClick={() => chooseDepartment(key)}
                 className="glass-card group p-7 text-left transition duration-300 hover:-translate-y-1 hover:shadow-glass-lg"
               >
-                <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-2xl">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-white/5 text-2xl">
                   {dept.icon}
                 </div>
-                <p className="mt-4 text-lg font-bold text-zinc-900">{dept.label}</p>
-                <p className="mt-1 text-sm text-zinc-600">{dept.blurb}</p>
+                <p className="mt-4 text-lg font-bold text-white">{dept.label}</p>
+                <p className="mt-1 text-sm text-zinc-400">{dept.blurb}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold gradient-text">
                   Continue
                   <span className="transition group-hover:translate-x-1">→</span>
@@ -185,19 +182,17 @@ function LoginGate({ children }) {
         <button
           type="button"
           onClick={backToDepartments}
-          className="text-sm font-semibold text-zinc-500 transition hover:text-zinc-800"
+          className="text-sm font-semibold text-zinc-400 transition hover:text-zinc-100"
         >
           ← Change department
         </button>
 
-        <div className="mt-4 grid h-12 w-12 place-items-center rounded-xl bg-brand-gradient text-2xl shadow-glass">
-          {dept.icon}
-        </div>
-        <p className="mt-4 text-sm font-semibold uppercase tracking-wide gradient-text">{dept.label}</p>
+        <LarkWordmark className="mt-4 h-7 w-auto text-zinc-100" />
+        <p className="mt-5 text-sm font-semibold uppercase tracking-wide gradient-text">{dept.label}</p>
         <h1 className="mt-1 text-2xl font-bold">
-          {isRegister ? 'Create your account' : 'Sign in to MediRoute'}
+          {isRegister ? 'Create your account' : 'Sign in'}
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-400">
           {isRegister
             ? `You'll be added to the ${dept.label}.`
             : 'Demo password for both accounts: password123'}
@@ -241,7 +236,7 @@ function LoginGate({ children }) {
           </label>
         ) : null}
 
-        {error ? <p className="mt-4 text-sm font-medium text-rose-600">{error}</p> : null}
+        {error ? <p className="mt-4 text-sm font-medium text-rose-400">{error}</p> : null}
 
         <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full">
           {submitting ? <Spinner tone="white" className="h-4 w-4" /> : null}
@@ -254,14 +249,14 @@ function LoginGate({ children }) {
               : 'Sign in'}
         </button>
 
-        <p className="mt-5 text-center text-sm text-zinc-600">
+        <p className="mt-5 text-center text-sm text-zinc-400">
           {isRegister ? (
             <>
               Already have an account?{' '}
               <button
                 type="button"
                 onClick={() => switchMode('signin')}
-                className="font-semibold text-brand-600 hover:text-brand-700"
+                className="font-semibold text-brand-400 hover:text-brand-300"
               >
                 Sign in
               </button>
@@ -272,7 +267,7 @@ function LoginGate({ children }) {
               <button
                 type="button"
                 onClick={() => switchMode('register')}
-                className="font-semibold text-brand-600 hover:text-brand-700"
+                className="font-semibold text-brand-400 hover:text-brand-300"
               >
                 Create a {dept.label.replace(' Department', '')} account
               </button>

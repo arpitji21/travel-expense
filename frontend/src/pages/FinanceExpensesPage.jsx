@@ -54,15 +54,15 @@ function FinanceExpensesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Expenses</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Expenses</p>
           <h2 className="text-3xl font-extrabold tracking-tight">Expense claims</h2>
-          <p className="mt-1 text-sm text-zinc-600">Total shown: {formatCurrency(total)}</p>
+          <p className="mt-1 text-sm text-zinc-400">Total shown: {formatCurrency(total)}</p>
         </div>
         <SalespersonFilter salespeople={salespeople} value={selectedUserId} onChange={setSelectedUserId} />
       </div>
 
       {message ? (
-        <p className="rounded-xl border border-zinc-200 bg-white/70 px-3 py-2 text-sm text-zinc-700">{message}</p>
+        <p className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-zinc-200">{message}</p>
       ) : null}
 
       {loading ? (
@@ -70,7 +70,7 @@ function FinanceExpensesPage() {
       ) : (
         <section className="glass-card">
           {expenses.length ? (
-            <div className="divide-y divide-zinc-200/70">
+            <div className="divide-y divide-white/10">
               {expenses.map((expense) => (
                 <div key={expense.id} className="grid gap-4 px-5 py-4 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
@@ -78,9 +78,9 @@ function FinanceExpensesPage() {
                       <p className="font-semibold">{expense.category}</p>
                       <StatusBadge status={expense.status} />
                     </div>
-                    <p className="mt-1 text-sm text-zinc-600">{expense.description || 'No description'}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-600">
-                      <span className="font-semibold text-zinc-900">
+                    <p className="mt-1 text-sm text-zinc-400">{expense.description || 'No description'}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-400">
+                      <span className="font-semibold text-white">
                         {formatCurrency(expense.amount, expense.currency)}
                       </span>
                       <span>{formatDate(expense.expenseDate)}</span>
@@ -90,12 +90,12 @@ function FinanceExpensesPage() {
                           href={buildAssetUrl(expense.receiptUrl)}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-semibold text-brand-600 hover:text-brand-700"
+                          className="font-semibold text-brand-400 hover:text-brand-300"
                         >
                           View bill
                         </a>
                       ) : (
-                        <span className="text-rose-600">No bill</span>
+                        <span className="text-rose-400">No bill</span>
                       )}
                     </div>
                   </div>
@@ -133,7 +133,7 @@ function FinanceExpensesPage() {
               ))}
             </div>
           ) : (
-            <p className="px-5 py-10 text-center text-sm text-zinc-500">No expenses found.</p>
+            <p className="px-5 py-10 text-center text-sm text-zinc-400">No expenses found.</p>
           )}
         </section>
       )}

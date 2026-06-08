@@ -105,6 +105,52 @@ export async function deleteExpense(expenseId) {
   return response.data;
 }
 
+// Marketing & sales materials (finance uploads; everyone views)
+export async function fetchMaterials() {
+  const response = await apiClient.get('/materials');
+  return response.data.materials;
+}
+
+export async function createMaterial({ title, description, category, linkUrl, file }) {
+  const body = new FormData();
+  body.append('title', title);
+  if (description) body.append('description', description);
+  if (category) body.append('category', category);
+  if (linkUrl) body.append('linkUrl', linkUrl);
+  if (file) body.append('file', file);
+
+  const response = await apiClient.post('/materials', body, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data.material;
+}
+
+export async function deleteMaterial(materialId) {
+  const response = await apiClient.delete(`/materials/${materialId}`);
+  return response.data;
+}
+
+// Stock (company-wide; finance manages, everyone views)
+export async function fetchStock(params = {}) {
+  const response = await apiClient.get('/stock', { params });
+  return response.data.stock;
+}
+
+export async function createStock(payload) {
+  const response = await apiClient.post('/stock', payload);
+  return response.data.stock;
+}
+
+export async function updateStock(stockId, payload) {
+  const response = await apiClient.put(`/stock/${stockId}`, payload);
+  return response.data.stock;
+}
+
+export async function deleteStock(stockId) {
+  const response = await apiClient.delete(`/stock/${stockId}`);
+  return response.data;
+}
+
 export async function approveExpense(expenseId) {
   const response = await apiClient.post(`/expenses/${expenseId}/approve`);
   return response.data.expense;

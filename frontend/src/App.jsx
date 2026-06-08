@@ -8,8 +8,12 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import DemandsPage from './pages/DemandsPage.jsx';
 import ExpensesPage from './pages/ExpensesPage.jsx';
 import SchedulePage from './pages/SchedulePage.jsx';
+import StockPage from './pages/StockPage.jsx';
+import MaterialsPage from './pages/MaterialsPage.jsx';
 import FinanceDemandsPage from './pages/FinanceDemandsPage.jsx';
 import FinanceExpensesPage from './pages/FinanceExpensesPage.jsx';
+import FinanceStockPage from './pages/FinanceStockPage.jsx';
+import FinanceMaterialsPage from './pages/FinanceMaterialsPage.jsx';
 import FinanceSalespeoplePage from './pages/FinanceSalespeoplePage.jsx';
 import FinanceSalespersonProfilePage from './pages/FinanceSalespersonProfilePage.jsx';
 
@@ -21,6 +25,8 @@ function App() {
           <FinanceLayout user={user}>
             <Routes>
               <Route path="/" element={<FinanceDemandsPage />} />
+              <Route path="/stock" element={<FinanceStockPage />} />
+              <Route path="/materials" element={<FinanceMaterialsPage />} />
               <Route path="/expenses" element={<FinanceExpensesPage />} />
               <Route path="/salespeople" element={<FinanceSalespeoplePage />} />
               <Route path="/salespeople/:userId" element={<FinanceSalespersonProfilePage />} />
@@ -34,6 +40,8 @@ function App() {
               <Route path="/schedule" element={<SchedulePage />} />
               <Route path="/demands" element={<DemandsPage />} />
               <Route path="/demands/new" element={<CreateDemandPage />} />
+              <Route path="/stock" element={<StockPage />} />
+              <Route path="/materials" element={<MaterialsPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/expenses/new" element={<CreateExpensePage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

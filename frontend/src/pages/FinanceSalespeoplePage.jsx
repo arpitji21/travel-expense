@@ -20,9 +20,9 @@ function FinanceSalespeoplePage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Salespeople</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Salespeople</p>
         <h2 className="text-3xl font-extrabold tracking-tight">Salesperson profiles</h2>
-        <p className="mt-1 text-sm text-zinc-600">
+        <p className="mt-1 text-sm text-zinc-400">
           Open a profile to review that person&apos;s daily schedule, expenses, and demands.
         </p>
       </div>
@@ -41,8 +41,8 @@ function FinanceSalespeoplePage() {
                 {initials(person.email)}
               </span>
               <div className="min-w-0">
-                <p className="truncate font-semibold text-zinc-900">{person.email}</p>
-                <p className="mt-0.5 text-sm font-medium text-brand-600">
+                <p className="truncate font-semibold text-white">{person.email}</p>
+                <p className="mt-0.5 text-sm font-medium text-brand-400">
                   View profile <span className="transition group-hover:translate-x-0.5">→</span>
                 </p>
               </div>
@@ -50,7 +50,7 @@ function FinanceSalespeoplePage() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-zinc-500">No salespeople found.</p>
+        <p className="text-sm text-zinc-400">No salespeople found.</p>
       )}
     </div>
   );

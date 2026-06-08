@@ -7,28 +7,30 @@ export default {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
       },
       colors: {
+        // LarkPilot brand red, sampled from larkaihealth.com
+        // (#ED2024 primary, #F68C8E salmon, #7D1113/#3B0809/#300607 deep reds).
         brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81'
+          50: '#fdf3f3',
+          100: '#fbe2e3',
+          200: '#f7c6c7',
+          300: '#f68c8e',
+          400: '#f15558',
+          500: '#ed2024',
+          600: '#d4121a',
+          700: '#7d1113',
+          800: '#3b0809',
+          900: '#300607'
         }
       },
       boxShadow: {
-        glass: '0 10px 40px -12px rgba(79, 70, 229, 0.25)',
-        'glass-lg': '0 24px 60px -20px rgba(79, 70, 229, 0.35)',
+        glass: '0 10px 40px -12px rgba(237, 32, 36, 0.25)',
+        'glass-lg': '0 24px 60px -20px rgba(237, 32, 36, 0.35)',
         soft: '0 2px 12px -4px rgba(15, 23, 42, 0.12)'
       },
       backgroundImage: {
-        'brand-gradient': 'linear-gradient(120deg, #4f46e5 0%, #7c3aed 50%, #6366f1 100%)',
+        'brand-gradient': 'linear-gradient(120deg, #ed2024 0%, #cb003f 55%, #7d1113 100%)',
         'app-gradient':
-          'radial-gradient(1200px 600px at 10% -10%, #e0e7ff 0%, transparent 55%), radial-gradient(1000px 600px at 110% 10%, #f3e8ff 0%, transparent 50%), linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)'
+          'radial-gradient(900px 520px at 50% 118%, rgba(125,17,19,0.5) 0%, transparent 60%), radial-gradient(1100px 700px at 50% -12%, rgba(59,8,9,0.55) 0%, transparent 55%), linear-gradient(180deg, #0a0506 0%, #060304 100%)'
       },
       keyframes: {
         'fade-in': {

@@ -70,9 +70,9 @@ function SchedulePage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Schedule</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Schedule</p>
         <h2 className="text-3xl font-extrabold tracking-tight">My daily schedule</h2>
-        <p className="mt-2 text-sm text-zinc-600">
+        <p className="mt-2 text-sm text-zinc-400">
           Plan your visits and tick each one off as you complete it — your manager can see this too.
         </p>
       </div>
@@ -110,7 +110,7 @@ function SchedulePage() {
       </form>
 
       {message ? (
-        <p className="rounded-xl border border-zinc-200 bg-white/70 px-3 py-2 text-sm text-zinc-700">{message}</p>
+        <p className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-zinc-200">{message}</p>
       ) : null}
 
       {loading ? (

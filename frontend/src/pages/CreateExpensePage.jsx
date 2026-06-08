@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createExpense, uploadReceipt } from '../lib/salesApi';
+import { createExpense } from '../lib/salesApi';
 
 function CreateExpensePage() {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ function CreateExpensePage() {
   const [amount, setAmount] = useState('');
   const [expenseDate, setExpenseDate] = useState('');
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState(null);
+  const [receiptLink, setReceiptLink] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -16,21 +16,21 @@ function CreateExpensePage() {
     event.preventDefault();
     setError('');
 
-    if (!file) {
-      setError('Please attach an image of your bill.');
+    if (!receiptLink.trim()) {
+      setError('Please paste a link to your bill (e.g. a Google Drive link).');
       return;
     }
 
     setSaving(true);
 
     try {
-      const expense = await createExpense({
+      await createExpense({
         category,
         amount: Number(amount),
         expenseDate,
-        description
+        description,
+        receiptUrl: receiptLink.trim()
       });
-      await uploadReceipt(expense.id, file);
       navigate('/expenses');
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to save expense.');
@@ -41,10 +41,11 @@ function CreateExpensePage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">New expense</p>
-        <h2 className="text-3xl font-extrabold tracking-tight">Upload a bill</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          Snap your metro bill (or any travel/other receipt), enter the amount and date, and submit it for reimbursement.
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">New expense</p>
+        <h2 className="text-3xl font-extrabold tracking-tight">Submit a bill</h2>
+        <p className="mt-2 text-sm text-zinc-400">
+          Upload your bill photo to Google Drive, then paste its share link here along with the amount
+          and date. The link is stored permanently for finance to review.
         </p>
       </div>
 
@@ -98,21 +99,24 @@ function CreateExpensePage() {
         </label>
 
         <label className="block">
-          <span className="field-label">Bill image</span>
+          <span className="field-label">Bill link (Google Drive, etc.)</span>
           <input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
+            value={receiptLink}
+            onChange={(event) => setReceiptLink(event.target.value)}
             required
-            className="input file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700"
+            className="input"
+            placeholder="https://drive.google.com/..."
           />
+          <span className="mt-1.5 block text-xs text-zinc-400">
+            Share the file as “Anyone with the link → Viewer” so finance can open it.
+          </span>
         </label>
 
-        {error ? <p className="text-sm font-medium text-rose-600">{error}</p> : null}
+        {error ? <p className="text-sm font-medium text-rose-400">{error}</p> : null}
 
         <div className="flex gap-2">
           <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? 'Uploading...' : 'Submit expense'}
+            {saving ? 'Saving...' : 'Submit expense'}
           </button>
           <button type="button" onClick={() => navigate('/expenses')} className="btn-ghost">
             Cancel
