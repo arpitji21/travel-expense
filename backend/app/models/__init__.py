@@ -1,4 +1,5 @@
 from app.models.demand import Demand
+from app.models.distributor_stock import DistributorStock, StockAllocation
 from app.models.expense import Expense
 from app.models.material import Material
 from app.models.notification import Notification
@@ -9,10 +10,12 @@ from app.models.user import User
 
 __all__ = [
     "Demand",
+    "DistributorStock",
     "Expense",
     "Material",
     "Notification",
     "ScheduleEntry",
+    "StockAllocation",
     "StockItem",
     "Target",
     "User",

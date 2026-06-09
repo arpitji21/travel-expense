@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask, send_from_directory
+from flask import jsonify
 from flask_cors import CORS
 
 from app.config import Config
@@ -17,6 +18,7 @@ from app.models import (  # noqa: F401
 )
 from app.routes.auth import auth_bp
 from app.routes.demands import demands_bp
+from app.routes.distributor_stock import distributor_stock_bp
 from app.routes.expenses import expenses_bp
 from app.routes.health import health_bp
 from app.routes.materials import materials_bp
@@ -31,6 +33,8 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    print("DATABASE URI =", app.config["SQLALCHEMY_DATABASE_URI"])
+
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
@@ -39,6 +43,7 @@ def create_app(config_class=Config):
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(demands_bp, url_prefix="/api/demands")
+    app.register_blueprint(distributor_stock_bp, url_prefix="/api/distributor-stock")
     app.register_blueprint(expenses_bp, url_prefix="/api/expenses")
     app.register_blueprint(materials_bp, url_prefix="/api/materials")
     app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
@@ -68,6 +73,7 @@ def create_app(config_class=Config):
         seed_data = [
             {"email": "sales@example.com", "password": "password123", "role": "sales"},
             {"email": "finance@example.com", "password": "password123", "role": "finance"},
+            {"email": "distributor@example.com", "password": "password123", "role": "distributor"},
         ]
 
         for item in seed_data:
@@ -82,5 +88,18 @@ def create_app(config_class=Config):
 
         db.session.commit()
         print("Seed users created.")
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return jsonify({"message": "Internal server error", "error": str(e)}), 500
+
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        # Pass through HTTP errors
+        if hasattr(e, "code") and hasattr(e, "description"):
+            return jsonify({"message": e.description}), e.code
+        # Non-HTTP exceptions
+        print(f"[server] Unhandled exception: {e}", flush=True)
+        return jsonify({"message": "Internal server error", "error": str(e)}), 500
 
     return app

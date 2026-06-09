@@ -86,48 +86,52 @@ function FinanceExpensesPage() {
                       <span>{formatDate(expense.expenseDate)}</span>
                       <span>{expense.salespersonEmail}</span>
                       {expense.receiptUrl ? (
-                        <a
-                          href={buildAssetUrl(expense.receiptUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-semibold text-brand-400 hover:text-brand-300"
-                        >
-                          View bill
-                        </a>
+                        <div className="flex items-center gap-3">
+                          <a
+                            href={expense.receiptUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-semibold text-brand-400 hover:text-brand-300"
+                          >
+                            Open Google Drive Bill
+                          </a>
+                        </div>
                       ) : (
-                        <span className="text-rose-400">No bill</span>
+                        <span className="text-rose-400">No bill link</span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {expense.status === 'submitted' ? (
-                      <>
+                  <div className="flex flex-col items-end gap-3 lg:flex-row lg:items-center">
+                    <div className="flex flex-wrap gap-2">
+                      {expense.status === 'submitted' ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => runAction(approveExpense, expense.id, 'Expense approved.')}
+                            className="btn-success btn-sm"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => runAction(rejectExpense, expense.id, 'Expense rejected.')}
+                            className="btn-danger btn-sm"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      ) : null}
+                      {expense.status === 'approved' ? (
                         <button
                           type="button"
-                          onClick={() => runAction(approveExpense, expense.id, 'Expense approved.')}
-                          className="btn-success btn-sm"
+                          onClick={() => runAction(reimburseExpense, expense.id, 'Expense marked reimbursed.')}
+                          className="btn-primary btn-sm"
                         >
-                          Approve
+                          Mark Reimbursed
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => runAction(rejectExpense, expense.id, 'Expense rejected.')}
-                          className="btn-danger btn-sm"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    ) : null}
-                    {expense.status === 'approved' ? (
-                      <button
-                        type="button"
-                        onClick={() => runAction(reimburseExpense, expense.id, 'Expense marked reimbursed.')}
-                        className="btn-primary btn-sm"
-                      >
-                        Mark Reimbursed
-                      </button>
-                    ) : null}
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               ))}

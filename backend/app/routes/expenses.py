@@ -104,9 +104,13 @@ def create_expense():
     db.session.commit()
 
     # Let finance know a new expense is waiting for review.
-    msg = f"{user.email} submitted a {category} expense of {currency} {float(amount):,.2f}."
-    push_many(finance_user_ids(), msg, "expense")
-    send_email(finance_emails(), "New expense submitted", f"{msg}\n\n— LarkPilot")
+    try:
+        msg = f"{user.email} submitted a {category} expense of {currency} {float(amount):,.2f}."
+        push_many(finance_user_ids(), msg, "expense")
+        send_email(finance_emails(), "New expense submitted", f"{msg}\n\n— LarkPilot")
+    except Exception as exc:
+        # Never let notification failures break the successful expense creation.
+        print(f"[expenses] Notification failed after commit: {exc}", flush=True)
 
     return jsonify({"expense": expense.to_dict()}), 201
 

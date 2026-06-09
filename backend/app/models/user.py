@@ -23,6 +23,8 @@ class User(db.Model):
     schedule_entries = db.relationship(
         "ScheduleEntry", back_populates="user", cascade="all, delete-orphan"
     )
+    distributor_stocks = db.relationship("DistributorStock", back_populates="distributor", cascade="all, delete-orphan")
+    received_allocations = db.relationship("StockAllocation", foreign_keys="StockAllocation.salesperson_id", back_populates="salesperson", cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

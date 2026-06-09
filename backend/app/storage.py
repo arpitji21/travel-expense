@@ -75,26 +75,35 @@ def save_upload(file_storage, folder):
 
     if r2_enabled():
         cfg = current_app.config
-        client = _r2_client()
-        key = f"{folder}/{object_name}"
-        client.upload_fileobj(
-            file_storage,
-            cfg["R2_BUCKET"],
-            key,
-            ExtraArgs={
-                "ContentType": file_storage.mimetype
-                or "application/octet-stream",
-            },
-        )
-        base = cfg["R2_PUBLIC_BASE_URL"].rstrip("/")
-        return f"{base}/{key}"
+        try:
+            client = _r2_client()
+            key = f"{folder}/{object_name}"
+            client.upload_fileobj(
+                file_storage,
+                cfg["R2_BUCKET"],
+                key,
+                ExtraArgs={
+                    "ContentType": file_storage.mimetype
+                    or "application/octet-stream",
+                },
+            )
+            base = cfg["R2_PUBLIC_BASE_URL"].rstrip("/")
+            return f"{base}/{key}"
+        except Exception as exc:
+            print(f"[storage] R2 upload FAILED: {exc}", flush=True)
+            # Fall back to local storage if R2 fails
+            print("[storage] Falling back to local storage.", flush=True)
 
     # Local fallback: write under uploads/<folder>/ and serve via Flask.
-    uploads_root = os.path.dirname(current_app.config["UPLOAD_FOLDER"])
-    local_dir = os.path.join(uploads_root, folder)
-    os.makedirs(local_dir, exist_ok=True)
-    file_storage.save(os.path.join(local_dir, object_name))
-    return f"/uploads/{folder}/{object_name}"
+    try:
+        uploads_root = os.path.dirname(current_app.config["UPLOAD_FOLDER"])
+        local_dir = os.path.join(uploads_root, folder)
+        os.makedirs(local_dir, exist_ok=True)
+        file_storage.save(os.path.join(local_dir, object_name))
+        return f"/uploads/{folder}/{object_name}"
+    except Exception as exc:
+        print(f"[storage] Local save FAILED: {exc}", flush=True)
+        raise
 
 
 def save_receipt(file_storage):

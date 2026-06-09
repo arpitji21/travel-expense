@@ -184,3 +184,42 @@ export async function reimburseExpense(expenseId) {
   const response = await apiClient.post(`/expenses/${expenseId}/reimburse`);
   return response.data.expense;
 }
+
+// --- Distributor Stock ---
+
+export async function fetchDistributorStock(params = {}) {
+  const response = await apiClient.get('/distributor-stock', { params });
+  return response.data.stocks;
+}
+
+export async function createDistributorStock(payload) {
+  const response = await apiClient.post('/distributor-stock', payload);
+  return response.data.stock;
+}
+
+export async function updateDistributorStock(stockId, payload) {
+  const response = await apiClient.put(`/distributor-stock/${stockId}`, payload);
+  return response.data.stock;
+}
+
+export async function deleteDistributorStock(stockId) {
+  const response = await apiClient.delete(`/distributor-stock/${stockId}`);
+  return response.data;
+}
+
+// --- Stock Allocations ---
+
+export async function fetchStockAllocations() {
+  const response = await apiClient.get('/distributor-stock/allocations');
+  return response.data.allocations;
+}
+
+export async function allocateStock(payload) {
+  const response = await apiClient.post('/distributor-stock/allocate', payload);
+  return response.data.allocation;
+}
+
+export async function fetchMyAssignedStock() {
+  const response = await apiClient.get('/distributor-stock/my-assigned');
+  return response.data.allocations;
+}

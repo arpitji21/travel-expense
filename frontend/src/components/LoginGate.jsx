@@ -13,6 +13,11 @@ const DEPARTMENTS = {
     label: 'Finance Department',
     blurb: 'Review demands and expenses, and approve reimbursements.',
     icon: '📊'
+  },
+  distributor: {
+    label: 'Distributor Department',
+    blurb: 'Manage your product inventory and track stock allocations.',
+    icon: '📦'
   }
 };
 

@@ -20,8 +20,15 @@ def register():
     if len(password) < 6:
         return jsonify({"message": "Password must be at least 6 characters."}), 400
 
-    if role not in {"sales", "finance"}:
-        return jsonify({"message": "Department must be sales or finance."}), 400
+    if role not in {"sales", "finance", "distributor"}:
+        return jsonify(
+            {"message": "Department must be sales, finance, or distributor."}
+        ), 400
+    
+    print("===== ALL USERS =====")
+    for u in User.query.all():
+        print(u.id, u.email, u.role)
+
 
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "Email is already registered."}), 409
@@ -35,16 +42,30 @@ def register():
     # Log the new user in straight away.
     access_token = create_access_token(identity=str(user.id))
 
-    return jsonify({"accessToken": access_token, "user": user.to_dict()}), 201
+    return jsonify(
+        {
+            "accessToken": access_token,
+            "user": user.to_dict(),
+        }
+    ), 201
 
 
 @auth_bp.post("/login")
 def login():
+    print("===== LOGIN ROUTE HIT =====")
+
     data = request.get_json(silent=True) or {}
+    print("LOGIN DATA:", data)
+
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
 
     user = User.query.filter_by(email=email).first()
+
+    print("USER FOUND:", user.email if user else None)
+
+    if user:
+        print("PASSWORD MATCH:", user.check_password(password))
 
     if not user or not user.check_password(password):
         return jsonify({"message": "Invalid credentials."}), 401
@@ -52,7 +73,6 @@ def login():
     access_token = create_access_token(identity=str(user.id))
 
     return jsonify({"accessToken": access_token, "user": user.to_dict()})
-
 
 @auth_bp.get("/me")
 @jwt_required()
