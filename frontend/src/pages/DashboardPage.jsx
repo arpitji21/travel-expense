@@ -96,7 +96,7 @@ function DashboardPage() {
           </Link>
         </div>
         <div className="px-5 py-4">
-          <ScheduleList entries={todaySchedule} emptyText="No visits assigned for today. Finance assigns your visits." />
+          <ScheduleList entries={todaySchedule} emptyText="No visits for today. You or finance can add visits." />
         </div>
       </section>
 

@@ -6,13 +6,11 @@ import { fetchMe, login, register } from '../lib/salesApi';
 const DEPARTMENTS = {
   sales: {
     label: 'Sales Department',
-    email: 'sales@example.com',
     blurb: 'Record hospital demands, plan your daily route and claim expenses.',
     icon: '🩺'
   },
   finance: {
     label: 'Finance Department',
-    email: 'finance@example.com',
     blurb: 'Review demands and expenses, and approve reimbursements.',
     icon: '📊'
   }
@@ -23,7 +21,7 @@ function LoginGate({ children }) {
   const [department, setDepartment] = useState(null);
   const [mode, setMode] = useState('signin'); // 'signin' | 'register'
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [authChecking, setAuthChecking] = useState(Boolean(localStorage.getItem('accessToken')));
   const [booting, setBooting] = useState(true);
@@ -50,8 +48,8 @@ function LoginGate({ children }) {
   function chooseDepartment(key) {
     setDepartment(key);
     setMode('signin');
-    setEmail(DEPARTMENTS[key].email);
-    setPassword('password123');
+    setEmail('');
+    setPassword('');
     setConfirm('');
     setError('');
   }
@@ -64,14 +62,9 @@ function LoginGate({ children }) {
   function switchMode(next) {
     setMode(next);
     setError('');
-    if (next === 'register') {
-      setEmail('');
-      setPassword('');
-      setConfirm('');
-    } else {
-      setEmail(DEPARTMENTS[department].email);
-      setPassword('password123');
-    }
+    setEmail('');
+    setPassword('');
+    setConfirm('');
   }
 
   function finishAuth(data) {
@@ -195,7 +188,7 @@ function LoginGate({ children }) {
         <p className="mt-1 text-sm text-zinc-400">
           {isRegister
             ? `You'll be added to the ${dept.label}.`
-            : 'Demo password for both accounts: password123'}
+            : 'Enter your credentials to continue.'}
         </p>
 
         <label className="mt-6 block">

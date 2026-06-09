@@ -53,7 +53,8 @@ def list_schedule():
 @jwt_required()
 def create_schedule_entry():
     # Finance assigns hospital visits to a salesperson for a day.
-    _, error = require_finance_user()
+    # Now salespeople can also assign visits to themselves.
+    user, error = require_current_user()
 
     if error:
         return error
@@ -64,7 +65,13 @@ def create_schedule_entry():
     if not place:
         return validation_error("place (hospital) is required.")
 
+    # Salespeople can only assign to themselves. Finance can assign to anyone.
     salesperson_id = data.get("userId")
+    if user.role != "finance":
+        if salesperson_id and int(salesperson_id) != user.id:
+            return validation_error("You can only assign visits to yourself.")
+        salesperson_id = user.id
+
     if not salesperson_id:
         return validation_error("userId (salesperson) is required.")
 
@@ -90,15 +97,16 @@ def create_schedule_entry():
     db.session.add(entry)
     db.session.commit()
 
-    # Let the salesperson know they have a new visit.
-    visit_msg = f"New visit assigned: {place} on {entry_date.isoformat()}."
-    push(salesperson.id, visit_msg, "visit")
-    if salesperson.email:
-        send_email(
-            salesperson.email,
-            "New visit assigned",
-            f"Hi {salesperson.email},\n\n{visit_msg}\n\n— LarkPilot",
-        )
+    # Let the salesperson know they have a new visit if assigned by someone else.
+    if user.id != salesperson.id:
+        visit_msg = f"New visit assigned: {place} on {entry_date.isoformat()}."
+        push(salesperson.id, visit_msg, "visit")
+        if salesperson.email:
+            send_email(
+                salesperson.email,
+                "New visit assigned",
+                f"Hi {salesperson.email},\n\n{visit_msg}\n\n— LarkPilot",
+            )
 
     return jsonify({"entry": entry.to_dict()}), 201
 
@@ -183,7 +191,8 @@ def update_schedule_entry(entry_id):
 @jwt_required()
 def delete_schedule_entry(entry_id):
     # Finance owns assignments, so only finance can remove them.
-    _, error = require_finance_user()
+    # Now salespeople can also remove visits they assigned to themselves.
+    user, error = require_current_user()
 
     if error:
         return error
@@ -192,6 +201,9 @@ def delete_schedule_entry(entry_id):
 
     if not entry:
         return jsonify({"message": "Schedule entry not found."}), 404
+
+    if user.role != "finance" and entry.user_id != user.id:
+        return jsonify({"message": "Permission denied."}), 403
 
     db.session.delete(entry)
     db.session.commit()
