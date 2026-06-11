@@ -13,7 +13,7 @@ function DistributorAllocationsPage() {
     try {
       const data = await fetchStockAllocations();
       setAllocations(data);
-    } catch (err) {
+    } catch {
       setMessage('Failed to load allocation history.');
     } finally {
       setLoading(false);
@@ -47,6 +47,7 @@ function DistributorAllocationsPage() {
               <thead>
                 <tr className="border-b border-white/10 bg-white/5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   <th className="px-5 py-3">Product</th>
+                  <th className="px-5 py-3">Serial Number</th>
                   <th className="px-5 py-3">Salesperson</th>
                   <th className="px-5 py-3">Quantity</th>
                   <th className="px-5 py-3">Allocated Date</th>
@@ -60,6 +61,7 @@ function DistributorAllocationsPage() {
                       {a.productName}
                       <span className="ml-2 text-xs font-normal text-zinc-500">{a.sku}</span>
                     </td>
+                    <td className="px-5 py-4 text-xs text-brand-400 font-semibold">{a.serialNumber || '—'}</td>
                     <td className="px-5 py-4 text-zinc-300">{a.salespersonEmail}</td>
                     <td className="px-5 py-4 font-bold text-brand-400">{a.quantityAllocated}</td>
                     <td className="px-5 py-4 text-zinc-400">{formatDate(a.allocatedAt)}</td>

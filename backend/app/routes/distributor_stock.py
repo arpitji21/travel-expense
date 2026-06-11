@@ -66,6 +66,9 @@ def create_distributor_stock():
         return validation_error("productName is required.")
 
     sku = (data.get("sku") or "").strip() or None
+    serial_number = (data.get("serialNumber") or "").strip() or None
+    if not serial_number:
+        return validation_error("serialNumber is required.")
     quantity = int(data.get("quantityAvailable") or 0)
     unit_price = parse_decimal(data.get("unitPrice"), "unitPrice")
 
@@ -73,6 +76,7 @@ def create_distributor_stock():
         distributor_id=user.id,
         product_name=product_name,
         sku=sku,
+        serial_number=serial_number,
         quantity_available=quantity,
         unit_price=unit_price,
     )
@@ -102,6 +106,8 @@ def update_distributor_stock(stock_id):
         stock.product_name = data["productName"].strip() or stock.product_name
     if "sku" in data:
         stock.sku = data["sku"].strip() or None
+    if "serialNumber" in data:
+        stock.serial_number = data["serialNumber"].strip() or None
     if "quantityAvailable" in data:
         stock.quantity_available = int(data["quantityAvailable"])
     if "unitPrice" in data:

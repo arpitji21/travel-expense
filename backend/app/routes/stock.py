@@ -73,11 +73,15 @@ def create_stock():
 
     supplier = (data.get("supplier") or "").strip() or None
     product = (data.get("product") or "").strip()
+    serial_number = (data.get("serialNumber") or "").strip() or None
     unit = (data.get("unit") or "").strip() or None
     note = (data.get("note") or "").strip() or None
 
     if not product:
         return validation_error("product is required.")
+
+    if not serial_number:
+        return validation_error("serialNumber is required.")
 
     try:
         quantity = _parse_quantity(data.get("quantity", 0))
@@ -87,6 +91,7 @@ def create_stock():
     item = StockItem(
         supplier=supplier,
         product=product,
+        serial_number=serial_number,
         quantity=quantity,
         unit=unit,
         note=note,
@@ -121,6 +126,9 @@ def update_stock(stock_id):
         if not product:
             return validation_error("product cannot be empty.")
         item.product = product
+
+    if "serialNumber" in data:
+        item.serial_number = (data.get("serialNumber") or "").strip() or None
 
     if "quantity" in data:
         try:

@@ -13,7 +13,7 @@ function FinanceAllocationsPage() {
     try {
       const data = await fetchStockAllocations();
       setAllocations(data);
-    } catch (err) {
+    } catch {
       setMessage('Failed to load allocation records.');
     } finally {
       setLoading(false);
@@ -47,6 +47,7 @@ function FinanceAllocationsPage() {
               <thead>
                 <tr className="border-b border-white/10 bg-white/5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   <th className="px-5 py-3">Product</th>
+                  <th className="px-5 py-3">Serial Number</th>
                   <th className="px-5 py-3">Distributor</th>
                   <th className="px-5 py-3">Recipient (Sales)</th>
                   <th className="px-5 py-3">Qty</th>
@@ -61,6 +62,7 @@ function FinanceAllocationsPage() {
                       <p className="font-semibold text-white">{a.productName}</p>
                       <p className="text-xs text-zinc-500">{a.sku}</p>
                     </td>
+                    <td className="px-5 py-4 text-xs text-brand-400 font-semibold">{a.serialNumber || '—'}</td>
                     <td className="px-5 py-4 text-xs text-zinc-400">{a.distributorEmail}</td>
                     <td className="px-5 py-4 text-zinc-300 font-medium">{a.salespersonEmail}</td>
                     <td className="px-5 py-4 font-bold text-brand-400">{a.quantityAllocated}</td>

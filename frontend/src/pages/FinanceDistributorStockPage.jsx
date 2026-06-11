@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PageLoading, Spinner } from '../components/Loader';
 import { allocateStock, fetchDistributorStock, fetchSalespeople } from '../lib/salesApi';
-import { formatCurrency, formatDate } from '../lib/formatters';
+import { formatCurrency } from '../lib/formatters';
 
 function AllocationForm({ stock, salespeople, onAllocated, onCancel }) {
   const [salespersonId, setSalespersonId] = useState('');
@@ -116,7 +116,7 @@ function FinanceDistributorStockPage() {
       ]);
       setStocks(stockData);
       setSalespeople(salesData);
-    } catch (err) {
+    } catch {
       setMessage('Failed to load data.');
     } finally {
       setLoading(false);
@@ -184,6 +184,7 @@ function FinanceDistributorStockPage() {
                   <th className="px-5 py-3">Distributor</th>
                   <th className="px-5 py-3">Product</th>
                   <th className="px-5 py-3">SKU</th>
+                  <th className="px-5 py-3">Serial Number</th>
                   <th className="px-5 py-3">Available</th>
                   <th className="px-5 py-3">Unit Price</th>
                   <th className="px-5 py-3 text-right">Actions</th>
@@ -195,6 +196,7 @@ function FinanceDistributorStockPage() {
                     <td className="px-5 py-4 text-xs font-medium text-zinc-400">{item.distributorEmail}</td>
                     <td className="px-5 py-4 font-semibold text-white">{item.productName}</td>
                     <td className="px-5 py-4 text-zinc-400">{item.sku || '—'}</td>
+                    <td className="px-5 py-4 text-zinc-400">{item.serialNumber || '—'}</td>
                     <td className="px-5 py-4">
                       <span className={`font-bold ${item.quantityAvailable < 10 ? 'text-rose-400' : 'text-emerald-400'}`}>
                         {item.quantityAvailable}

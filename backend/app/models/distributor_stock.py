@@ -12,6 +12,7 @@ class DistributorStock(db.Model):
     distributor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     product_name = db.Column(db.String(255), nullable=False)
     sku = db.Column(db.String(100), nullable=True)
+    serial_number = db.Column(db.String(255), nullable=False)
     quantity_available = db.Column(db.Integer, nullable=False, default=0)
     unit_price = db.Column(db.Numeric(12, 2), nullable=True)
     created_at = db.Column(
@@ -36,6 +37,7 @@ class DistributorStock(db.Model):
             "distributorEmail": self.distributor.email if self.distributor else None,
             "productName": self.product_name,
             "sku": self.sku,
+            "serialNumber": self.serial_number,
             "quantityAvailable": self.quantity_available,
             "unitPrice": float(self.unit_price) if self.unit_price else None,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
@@ -70,6 +72,7 @@ class StockAllocation(db.Model):
             "stockId": self.stock_id,
             "productName": self.stock.product_name if self.stock else None,
             "sku": self.stock.sku if self.stock else None,
+            "serialNumber": self.stock.serial_number if self.stock else None,
             "salespersonId": self.salesperson_id,
             "salespersonEmail": self.salesperson.email if self.salesperson else None,
             "financeUserId": self.finance_user_id,

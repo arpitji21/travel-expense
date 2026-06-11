@@ -6,6 +6,7 @@ import { formatCurrency, formatDate } from '../lib/formatters';
 function StockForm({ stock, onSaved, onCancel }) {
   const [productName, setProductName] = useState(stock?.productName || '');
   const [sku, setSku] = useState(stock?.sku || '');
+  const [serialNumber, setSerialNumber] = useState(stock?.serialNumber || '');
   const [quantity, setQuantity] = useState(stock?.quantityAvailable || 0);
   const [unitPrice, setUnitPrice] = useState(stock?.unitPrice || '');
   const [submitting, setSubmitting] = useState(false);
@@ -19,6 +20,7 @@ function StockForm({ stock, onSaved, onCancel }) {
     const payload = {
       productName,
       sku,
+      serialNumber,
       quantityAvailable: Number(quantity),
       unitPrice: unitPrice ? Number(unitPrice) : null
     };
@@ -57,6 +59,16 @@ function StockForm({ stock, onSaved, onCancel }) {
             onChange={(e) => setSku(e.target.value)}
             className="input"
             placeholder="e.g. SG-100"
+          />
+        </label>
+        <label className="block">
+          <span className="field-label">Serial Number</span>
+          <input
+            value={serialNumber}
+            onChange={(e) => setSerialNumber(e.target.value)}
+            required
+            className="input"
+            placeholder="e.g. SN-123456"
           />
         </label>
         <label className="block">
@@ -108,7 +120,7 @@ function DistributorInventoryPage() {
     try {
       const data = await fetchDistributorStock();
       setStocks(data);
-    } catch (err) {
+    } catch {
       setMessage('Failed to load inventory.');
     } finally {
       setLoading(false);
@@ -124,7 +136,7 @@ function DistributorInventoryPage() {
     try {
       await deleteDistributorStock(id);
       loadStocks();
-    } catch (err) {
+    } catch {
       alert('Failed to delete stock item.');
     }
   }
@@ -175,6 +187,7 @@ function DistributorInventoryPage() {
                 <tr className="border-b border-white/10 bg-white/5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   <th className="px-5 py-3">Product Name</th>
                   <th className="px-5 py-3">SKU</th>
+                  <th className="px-5 py-3">Serial Number</th>
                   <th className="px-5 py-3">Available</th>
                   <th className="px-5 py-3">Unit Price</th>
                   <th className="px-5 py-3">Last Updated</th>
@@ -186,6 +199,7 @@ function DistributorInventoryPage() {
                   <tr key={item.id} className="transition hover:bg-white/[0.02]">
                     <td className="px-5 py-4 font-semibold text-white">{item.productName}</td>
                     <td className="px-5 py-4 text-zinc-400">{item.sku || '—'}</td>
+                    <td className="px-5 py-4 text-zinc-400">{item.serialNumber || '—'}</td>
                     <td className="px-5 py-4">
                       <span className={`font-bold ${item.quantityAvailable < 10 ? 'text-rose-400' : 'text-emerald-400'}`}>
                         {item.quantityAvailable}

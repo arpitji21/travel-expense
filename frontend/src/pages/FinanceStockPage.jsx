@@ -3,7 +3,7 @@ import { PageLoading } from '../components/Loader';
 import { createStock, deleteStock, fetchStock, updateStock } from '../lib/salesApi';
 import { formatDate } from '../lib/formatters';
 
-const EMPTY_FORM = { id: null, supplier: '', product: '', quantity: '', unit: '', note: '' };
+const EMPTY_FORM = { id: null, supplier: '', product: '', serialNumber: '', quantity: '', unit: '', note: '' };
 
 function FinanceStockPage() {
   const [stock, setStock] = useState([]);
@@ -44,6 +44,7 @@ function FinanceStockPage() {
       id: item.id,
       supplier: item.supplier || '',
       product: item.product,
+      serialNumber: item.serialNumber || '',
       quantity: String(item.quantity),
       unit: item.unit || '',
       note: item.note || ''
@@ -64,6 +65,7 @@ function FinanceStockPage() {
     const payload = {
       supplier: form.supplier.trim(),
       product: form.product.trim(),
+      serialNumber: form.serialNumber.trim(),
       quantity: Number(form.quantity || 0),
       unit: form.unit.trim(),
       note: form.note.trim()
@@ -132,6 +134,16 @@ function FinanceStockPage() {
               />
             </label>
             <label className="block">
+              <span className="field-label">Serial Number</span>
+              <input
+                value={form.serialNumber}
+                onChange={(event) => setField('serialNumber', event.target.value)}
+                required
+                className="input"
+                placeholder="e.g. SN-998877"
+              />
+            </label>
+            <label className="block">
               <span className="field-label">Supplier / vendor (optional)</span>
               <input
                 value={form.supplier}
@@ -194,6 +206,7 @@ function FinanceStockPage() {
                 <thead className="border-b border-white/10 bg-white/[0.04] text-xs uppercase tracking-wide text-zinc-400">
                   <tr>
                     <th className="px-5 py-3">Product</th>
+                    <th className="px-5 py-3">Serial Number</th>
                     <th className="px-5 py-3">Supplier</th>
                     <th className="px-5 py-3">Available</th>
                     <th className="px-5 py-3">Updated</th>
@@ -207,6 +220,7 @@ function FinanceStockPage() {
                         {item.product}
                         {item.note ? <span className="block text-xs font-normal text-zinc-400">{item.note}</span> : null}
                       </td>
+                      <td className="px-5 py-3 text-zinc-400">{item.serialNumber || '—'}</td>
                       <td className="px-5 py-3 text-zinc-400">{item.supplier || '—'}</td>
                       <td className="px-5 py-3 whitespace-nowrap">
                         <span className={item.quantity <= 0 ? 'font-semibold text-rose-400' : 'font-semibold text-zinc-100'}>

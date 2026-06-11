@@ -13,7 +13,7 @@ function SalespersonAssignedStockPage() {
     try {
       const data = await fetchMyAssignedStock();
       setAllocations(data);
-    } catch (err) {
+    } catch {
       setMessage('Failed to load assigned stock.');
     } finally {
       setLoading(false);
@@ -49,6 +49,11 @@ function SalespersonAssignedStockPage() {
                   {a.sku || 'SKU: —'}
                 </p>
                 <h3 className="mt-1 text-xl font-bold text-white">{a.productName}</h3>
+                {a.serialNumber && (
+                  <p className="mt-1 text-sm font-semibold text-brand-400">
+                    Serial Number: {a.serialNumber}
+                  </p>
+                )}
                 <p className="mt-2 text-sm text-zinc-400">
                   From Distributor: <span className="text-zinc-200">{a.distributorEmail}</span>
                 </p>

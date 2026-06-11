@@ -41,8 +41,8 @@ function StockPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Stock</p>
         <h2 className="text-3xl font-extrabold tracking-tight">Company stock</h2>
         <p className="mt-1 text-sm text-zinc-400">
-          Stock available across the company — what's left after demands are booked. {stock.length} item
-          {stock.length === 1 ? '' : 's'} · {totalUnits} units available.
+          Stock available across the company &mdash; what&apos;s left after demands are booked. {stock.length} item
+          {stock.length === 1 ? '' : 's'} &middot; {totalUnits} units available.
         </p>
       </div>
 
@@ -61,6 +61,11 @@ function StockPage() {
                   <div key={item.id} className="flex items-center justify-between gap-4 px-5 py-3">
                     <div>
                       <p className="font-medium">{item.product}</p>
+                      {item.serialNumber ? (
+                        <p className="mt-0.5 text-xs font-semibold text-brand-400">
+                          SN: {item.serialNumber}
+                        </p>
+                      ) : null}
                       {item.note ? <p className="mt-0.5 text-xs text-zinc-400">{item.note}</p> : null}
                       <p className="mt-0.5 text-xs text-zinc-400">Updated {formatDate(item.updatedAt)}</p>
                     </div>

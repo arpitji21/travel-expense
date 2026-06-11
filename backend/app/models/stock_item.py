@@ -16,6 +16,7 @@ class StockItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier = db.Column(db.String(255), nullable=True)
     product = db.Column(db.String(255), nullable=False)
+    serial_number = db.Column(db.String(255), nullable=True)
     quantity = db.Column(db.Integer, nullable=False, default=0)
     unit = db.Column(db.String(50), nullable=True)
     note = db.Column(db.Text, nullable=True)
@@ -38,6 +39,7 @@ class StockItem(db.Model):
             "id": self.id,
             "supplier": self.supplier,
             "product": self.product,
+            "serialNumber": self.serial_number,
             "quantity": self.quantity,
             "unit": self.unit,
             "note": self.note,
