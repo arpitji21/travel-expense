@@ -17,26 +17,93 @@ import { formatCurrency, formatDate } from '../lib/formatters';
 
 function FinanceSalespersonProfilePage() {
   const { userId } = useParams();
+
   const [person, setPerson] = useState(null);
   const [schedule, setSchedule] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [demands, setDemands] = useState([]);
+
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [user, scheduleEntries, expenseList, demandList] = await Promise.all([
-      fetchUser(userId),
-      fetchSchedule(userId),
-      fetchExpenses(userId),
-      fetchDemands(userId)
-    ]);
-    setPerson(user);
-    setSchedule(scheduleEntries);
-    setExpenses(expenseList);
-    setDemands(demandList);
+    setMessage("");
+
+    try {
+
+      console.log("Loading salesperson...");
+
+      const user = await fetchUser(userId);
+
+      console.log("User Loaded", user);
+
+      setPerson(user);
+
+    } catch (err) {
+
+      console.error("User API Failed", err);
+
+      setMessage(
+        err.response?.data?.message ||
+        "Unable to load salesperson."
+      );
+
+      setLoading(false);
+
+      return;
+    }
+
+    try {
+
+      console.log("Loading Schedule...");
+
+      const data = await fetchSchedule({ userId });
+
+      console.log(data);
+
+      setSchedule(Array.isArray(data) ? data : []);
+
+    } catch (err) {
+
+      console.error("Schedule API Failed", err);
+
+    }
+
+    try {
+
+      console.log("Loading Expenses...");
+
+      const data = await fetchExpenses(userId);
+
+      console.log(data);
+
+      setExpenses(Array.isArray(data) ? data : []);
+
+    } catch (err) {
+
+      console.error("Expense API Failed", err);
+
+    }
+
+    try {
+
+      console.log("Loading Demands...");
+
+      const data = await fetchDemands(userId);
+
+      console.log(data);
+
+      setDemands(Array.isArray(data) ? data : []);
+
+    } catch (err) {
+
+      console.error("Demand API Failed", err);
+
+    }
+
     setLoading(false);
+
   }, [userId]);
 
   useEffect(() => {
@@ -44,14 +111,24 @@ function FinanceSalespersonProfilePage() {
   }, [load]);
 
   async function runAction(action, expenseId, successMessage) {
-    setMessage('');
+
     try {
+
       await action(expenseId);
+
       await load();
+
       setMessage(successMessage);
+
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Unable to update expense.');
+
+      setMessage(
+        err.response?.data?.message ||
+        "Unable to update expense."
+      );
+
     }
+
   }
 
   if (loading) {
@@ -59,135 +136,242 @@ function FinanceSalespersonProfilePage() {
   }
 
   if (!person) {
-    return <p className="text-sm text-zinc-400">Salesperson not found.</p>;
+    return (
+      <div className="text-center py-10">
+        <h2 className="text-xl font-bold text-red-500">
+          Salesperson not found
+        </h2>
+
+        {message && (
+          <p className="mt-2 text-gray-400">
+            {message}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <Link to="/salespeople" className="text-sm font-semibold text-brand-400 hover:text-brand-300">
+
+      <Link
+        to="/salespeople"
+        className="text-sm font-semibold text-brand-400 hover:text-brand-300"
+      >
         ← Back to salespeople
       </Link>
 
       <div className="glass-card flex items-center gap-4 p-6">
-        <span className="grid h-14 w-14 flex-none place-items-center rounded-2xl bg-brand-gradient text-lg font-bold text-white">
-          {(person.email || '?').slice(0, 2).toUpperCase()}
+
+        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-white font-bold">
+          {(person.email || "?").slice(0, 2).toUpperCase()}
         </span>
+
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Salesperson profile</p>
-          <h2 className="text-2xl font-extrabold tracking-tight">{person.email}</h2>
+
+          <p className="text-sm uppercase tracking-wide text-brand-400">
+            Salesperson Profile
+          </p>
+
+          <h2 className="text-2xl font-bold">
+            {person.email}
+          </h2>
+
         </div>
+
       </div>
 
-      {message ? (
-        <p className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-zinc-200">{message}</p>
-      ) : null}
+      {message && (
+        <div className="rounded-lg bg-red-500/10 border border-red-500 p-3">
+          {message}
+        </div>
+      )}
 
       <section className="glass-card p-6">
-        <h3 className="section-title">Daily schedule</h3>
+
+        <h3 className="section-title">
+          Daily Schedule
+        </h3>
+
         <div className="mt-4">
-          <ScheduleList entries={schedule} emptyText="This salesperson has no schedule entries." />
+
+          <ScheduleList
+            entries={schedule}
+            emptyText="No schedule found."
+          />
+
         </div>
+
       </section>
 
       <section className="glass-card p-6">
-        <h3 className="section-title">Reimbursement bills</h3>
-        <div className="mt-4 space-y-3">
-          {expenses.length ? (
-            expenses.map((expense) => (
-              <div key={expense.id} className="rounded-xl border border-white/10 bg-white/[0.05] p-4">
-                <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className="font-semibold">{expense.category}</p>
-                      <StatusBadge status={expense.status} />
-                    </div>
-                    <p className="mt-1 text-sm text-zinc-400">{expense.description || 'No description'}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-zinc-400">
-                      <span className="font-semibold text-white">
-                        {formatCurrency(expense.amount, expense.currency)}
-                      </span>
-                      <span>{formatDate(expense.expenseDate)}</span>
-                      {expense.receiptUrl ? (
-                        <a
-                          href={buildAssetUrl(expense.receiptUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-semibold text-brand-400 hover:text-brand-300"
-                        >
-                          View bill
-                        </a>
-                      ) : (
-                        <span className="text-rose-400">No bill</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {expense.status === 'submitted' ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => runAction(approveExpense, expense.id, 'Expense approved.')}
-                          className="btn-success btn-sm"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => runAction(rejectExpense, expense.id, 'Expense rejected.')}
-                          className="btn-danger btn-sm"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    ) : null}
-                    {expense.status === 'approved' ? (
-                      <button
-                        type="button"
-                        onClick={() => runAction(reimburseExpense, expense.id, 'Expense marked reimbursed.')}
-                        className="btn-primary btn-sm"
-                      >
-                        Mark Reimbursed
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ))
+
+        <h3 className="section-title">
+          Reimbursement Bills
+        </h3>
+
+        <div className="space-y-4 mt-4">
+
+          {expenses.length === 0 ? (
+
+            <p>No expenses found.</p>
+
           ) : (
-            <p className="text-sm text-zinc-400">No expenses raised.</p>
+
+            expenses.map((expense) => (
+
+              <div
+                key={expense.id}
+                className="rounded-xl border border-white/10 p-4"
+              >
+
+                <div className="flex flex-wrap items-center gap-2">
+
+                  <strong>{expense.category}</strong>
+
+                  <StatusBadge status={expense.status} />
+
+                </div>
+
+                <p>{expense.description || "No description"}</p>
+
+                <p>
+
+                  {formatCurrency(
+                    expense.amount,
+                    expense.currency
+                  )}
+
+                </p>
+
+                <p>
+
+                  {formatDate(expense.expenseDate)}
+
+                </p>
+
+                {expense.receiptUrl && (
+
+                  <a
+                    href={buildAssetUrl(expense.receiptUrl)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View Bill
+                  </a>
+
+                )}
+
+                <div className="flex gap-2 mt-3">
+
+                  {expense.status === "submitted" && (
+                    <>
+                      <button
+                        className="btn-success btn-sm"
+                        onClick={() =>
+                          runAction(
+                            approveExpense,
+                            expense.id,
+                            "Expense Approved"
+                          )
+                        }
+                      >
+                        Approve
+                      </button>
+
+                      <button
+                        className="btn-danger btn-sm"
+                        onClick={() =>
+                          runAction(
+                            rejectExpense,
+                            expense.id,
+                            "Expense Rejected"
+                          )
+                        }
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+
+                  {expense.status === "approved" && (
+                    <button
+                      className="btn-primary btn-sm"
+                      onClick={() =>
+                        runAction(
+                          reimburseExpense,
+                          expense.id,
+                          "Expense Reimbursed"
+                        )
+                      }
+                    >
+                      Mark Reimbursed
+                    </button>
+                  )}
+
+                </div>
+
+              </div>
+
+            ))
+
           )}
+
         </div>
+
       </section>
 
       <section className="glass-card p-6">
-        <h3 className="section-title">Hospital demands</h3>
-        <div className="mt-4 space-y-2">
-          {demands.length ? (
+
+        <h3 className="section-title">
+          Hospital Demands
+        </h3>
+
+        <div className="space-y-3 mt-4">
+
+          {demands.length === 0 ? (
+
+            <p>No demands found.</p>
+
+          ) : (
+
             demands.map((demand) => (
+
               <div
                 key={demand.id}
-                className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.05] p-4"
+                className="rounded-xl border border-white/10 p-4"
               >
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <p className="font-semibold">{demand.hospitalName}</p>
-                    <StatusBadge status={demand.status} />
-                  </div>
-                  {demand.hospitalAddress ? (
-                    <p className="text-sm text-zinc-400">{demand.hospitalAddress}</p>
-                  ) : null}
-                  <p className="text-sm text-zinc-400">
-                    {demand.product} &times; {demand.quantity}
-                  </p>
+
+                <div className="flex items-center gap-2">
+
+                  <strong>
+                    {demand.hospitalName}
+                  </strong>
+
+                  <StatusBadge status={demand.status} />
+
                 </div>
-                <span className="text-sm text-zinc-400">{formatDate(demand.createdAt)}</span>
+
+                <p>{demand.hospitalAddress}</p>
+
+                <p>
+                  {demand.product} × {demand.quantity}
+                </p>
+
+                <small>
+                  {formatDate(demand.createdAt)}
+                </small>
+
               </div>
+
             ))
-          ) : (
-            <p className="text-sm text-zinc-400">No demands recorded.</p>
+
           )}
+
         </div>
+
       </section>
+
     </div>
   );
 }

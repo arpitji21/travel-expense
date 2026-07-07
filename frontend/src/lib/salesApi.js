@@ -22,14 +22,17 @@ export async function fetchSalespeople() {
 }
 
 export async function fetchUser(userId) {
-  const response = await apiClient.get(`/users/${userId}`);
-  return response.data.user;
+  const response = await apiClient.get(`/users/${Number(userId)}`);
+  return response.data.user || null;
 }
 
 // Daily schedule / assigned visits
 export async function fetchSchedule(params = {}) {
-  const response = await apiClient.get('/schedule', { params });
-  return response.data.entries;
+  const response = await apiClient.get("/schedule", {
+    params,
+  });
+
+  return response.data.entries || [];
 }
 
 export async function createScheduleEntry(payload) {
@@ -49,9 +52,13 @@ export async function deleteScheduleEntry(entryId) {
 
 // Demands
 export async function fetchDemands(userId) {
-  const params = userId ? { userId } : {};
-  const response = await apiClient.get('/demands', { params });
-  return response.data.demands;
+  const response = await apiClient.get("/demands", {
+    params: {
+      userId: Number(userId),
+    },
+  });
+
+  return response.data.demands || [];
 }
 
 export async function createDemand(payload) {
@@ -71,9 +78,13 @@ export async function deleteDemand(demandId) {
 
 // Expenses (metro bills)
 export async function fetchExpenses(userId) {
-  const params = userId ? { userId } : {};
-  const response = await apiClient.get('/expenses', { params });
-  return response.data.expenses;
+  const response = await apiClient.get("/expenses", {
+    params: {
+      userId: Number(userId),
+    },
+  });
+
+  return response.data.expenses || [];
 }
 
 export async function createExpense(payload) {
